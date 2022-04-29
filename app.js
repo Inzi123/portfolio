@@ -36,4 +36,25 @@ $(window).scroll(function(){
 });
 
 
+var $window = $(window),
+    $document = $(document),
+    button = $('.sideRedes');
+
+button.css({
+    opacity: 1
+});
+
+$window.on('scroll', function () {
+    if (($window.scrollTop() + $window.height()) == $document.height()) {
+        button.stop(true).animate({
+            opacity: 0
+        }, 250);
+    } else {
+        button.stop(true).animate({
+            opacity: 1
+        }, 250);
+    }
+});
+
+
 

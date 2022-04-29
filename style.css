@@ -790,6 +790,44 @@ body {
   fill: white;
 }
 
+.footer {
+  padding-top: 3rem;
+  width: 100%;
+}
+
+.footer__redes {
+  width: 100%;
+  margin: auto;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  gap: 1rem;
+  z-index: 0;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+}
+
+.footer__redes li {
+  list-style: none;
+  -webkit-transition: 0.3s ease-in;
+  transition: 0.3s ease-in;
+}
+
+.footer__redes li:hover {
+  -webkit-transform: translateY(-5px);
+          transform: translateY(-5px);
+}
+
+.footer__redes li:hover a svg {
+  stop-color: var(--main-gradient);
+}
+
+.footer__redes li a svg {
+  width: 2rem;
+  fill: white;
+}
+
 @media screen and (max-width: 767px) {
   .navbar {
     background: #00000000;
