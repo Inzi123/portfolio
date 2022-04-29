@@ -907,6 +907,13 @@ body {
         -ms-flex-direction: column;
             flex-direction: column;
   }
+  .work__container div .work__card {
+    width: 95%;
+    margin: 2rem auto 0 auto;
+  }
+  .work__container div .work__card img {
+    width: 30%;
+  }
 }
 
 .navbar__active {

@@ -811,8 +811,19 @@ body {
         &__container {
             div {
                 flex-direction: column;
+
+                .work__card {
+                    width: 95%;
+                    margin: 2rem auto 0 auto;
+
+                    img {
+                        width: 30%;
+                    }
+                }
             }
         }
+
+       
     }
 
 
