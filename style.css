@@ -423,6 +423,7 @@ body {
 
 .about__titels p {
   margin-bottom: 1rem;
+  font-weight: 200;
 }
 
 .about__titels ul {
