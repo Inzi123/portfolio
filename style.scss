@@ -39,9 +39,10 @@ body {
     justify-content: space-around;
     align-items: center;
     min-height: 8vh;
-    z-index: 100;
+    z-index: 1;
     background-color: rgba(14, 14, 14, 0);
     position: fixed;
+    transform: translateZ(51px);
 
     
         &__logo {

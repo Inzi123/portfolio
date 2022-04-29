@@ -36,9 +36,11 @@ body {
       -ms-flex-align: center;
           align-items: center;
   min-height: 8vh;
-  z-index: 100;
+  z-index: 1;
   background-color: rgba(14, 14, 14, 0);
   position: fixed;
+  -webkit-transform: translateZ(51px);
+          transform: translateZ(51px);
 }
 
 .navbar__logo {
