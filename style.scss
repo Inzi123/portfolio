@@ -1,0 +1,778 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700;900&display=swap');
+
+:root {
+    --main-gradient: linear-gradient(90deg, #ff00d6 0%, #001AFF 100%);
+    --text-titel: white;
+    --text-color: rgb(173, 173, 173);
+    --bg-color: rgb(39, 39, 39);
+    $color-box-1 : #0f9bc0;
+
+  }
+
+
+
+* {
+    padding: 0;
+    margin: 0;
+}
+
+body {
+    box-sizing: border-box;
+    background-color: rgb(14, 14, 14);
+    font-family: 'Roboto', sans-serif;
+    color:var(--text-titel) ;
+}
+
+/* Principio de navbar */
+
+.logoopacity {
+    opacity: 0;
+}
+
+
+
+
+.navbar {
+    width: 100%;
+    height:70px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    min-height: 8vh;
+    z-index: 1;
+    background-color: rgba(14, 14, 14, 0);
+    position: fixed;
+
+    
+        &__logo {
+            
+            transition: 0.6s;
+
+            img {
+                width: 50px;
+                filter: drop-shadow(1px 1px 1px rgba(44, 44, 44, 0.534));
+                transition: 0.4s;
+                cursor: pointer;
+
+                &:hover {
+                    transform: scale(1.1);
+                    transition: 0.4s;
+                }
+            }
+
+        }
+
+        
+
+        &__links {
+            display: flex;
+            justify-content: space-around;
+            width: 40%;
+            align-items: center;
+            transition: 0.5s;
+
+            li {
+                list-style: none;
+                
+            }
+
+            a {
+                color: var(--text-titel);
+                text-decoration: none;
+                display: inline-block;
+                position: relative;
+                font-size: 0.9rem;
+                padding: 0rem 1rem;
+                transition: 0.2s ease;
+                font-weight: 500;
+
+                &:after {
+                    content: "";
+                    display: block;
+                    position: absolute;
+                    width: 0;
+                    bottom: 0;
+                    height: 2px;
+                    margin: -1px 1rem;
+                    left: 0;
+                    background: var(--main-gradient);
+                    transition: all 0.4s ease-out 0s;
+                }
+                &:hover:after {
+                    width: 90%;
+                }
+            }
+
+            .navbar__actual {
+                &:hover:after {
+                    width: 0%;
+                }
+            }
+        }
+
+        &__actual {
+            color: var(--text-titel);
+            text-decoration: none;
+            display: inline-block;
+            position: relative;
+            font-size: 0.9rem;
+            padding: 0rem 1rem;
+            transition: 0.2s ease;
+            
+
+        &:before {
+            content: "";
+                display: block;
+                position: absolute;
+                width: 90%;
+                bottom: 0;
+                height: 2px;
+                margin: -1px 1rem;
+                left: 0;
+                background: var(--main-gradient);
+                transition: all 0.4s ease-out 0s;
+        }
+        &:after {
+            height: 0;
+            width: 0;
+        }
+
+        &:after:hover {
+            height: 0;
+            width: 0;
+        }
+    }
+
+        
+
+        &__btnactive {
+            background: var(--main-gradient);
+            transition: 0.3s;
+            padding: 0.3rem 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 3px;
+            transition: 0.3s;
+
+            a {
+                padding: 0.5rem 1rem;
+                color: var(--text-titel);
+                font-weight: 500;
+
+                &:after {
+                    content: none;
+                }
+                &:hover {
+                    color: var(--text-titel);
+                }
+
+               
+            }
+
+            img {
+                width: 1rem;
+                transition: 0.4s;
+            }
+
+            &:hover {
+                background-size: 180%;
+                transition: 0.3s;
+            }
+
+            &:hover img{
+                transform: rotateZ(-90deg);
+            }
+
+        }
+
+
+        
+
+        &__burger {
+
+            display: none;
+            cursor: pointer;
+
+            div {
+                margin: 5px;
+                width: 25px;
+                height: 3px;
+                background: #ffffff;
+                border-radius: 5px;
+                box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.342);
+                transition: all 0.3s ease;
+            }
+        }
+        
+}
+
+.activado {
+
+    transition: 0.3s;
+
+    a {
+        color: var(--text-titel);
+    }
+}
+
+
+.floatingnav {
+    position: fixed;
+    box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.288);
+    transition: 0.5s;
+    background: linear-gradient( rgb(14, 14, 14) 20%, rgba(14, 14, 14, 0.342) 80%, rgba(0, 0, 0, 0) 100%) ;
+    backdrop-filter: blur(5px);
+}
+
+
+/* Fin de navbar */
+
+/* Principio de main */
+
+#main {
+
+    height: 100vh;
+    margin: auto;
+    width: 100%;
+    position: relative;
+    box-shadow: 2px 2px 5px black;
+
+    &:before {
+        content: "";
+        background-image: url("/images/topography\ 1.svg");
+        background-size: 40%;
+        background-repeat: repeat;
+            display: block;
+            position: absolute;
+            width: 100%;
+            bottom: 0;
+            height: 100vh;
+            left: 0;
+            transition: all 0.4s ease-out 0s;
+            z-index: -1;
+    }
+
+
+    div {
+        padding: 10rem 0 0 0;
+        margin: auto;
+        width: 70%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+    }
+
+    p {
+        width: auto;
+        padding: 0rem 1rem;
+        color: var(--text-titel);
+        font-size: 1.4rem;
+        background: var(--main-gradient);
+        border-radius: 4px;
+    }
+
+    h1 {
+        color: var(--text-titel);
+        font-size: 4rem;
+        font-weight: 500;
+    }
+    h2 {
+        line-height: 0.9;
+        font-size: 5rem;
+        background: var(--main-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    h3 {
+        margin-top: 1rem;
+        color: var(--text-color);
+        font-weight: 300;
+    }
+
+    a {
+        margin-top: 1rem;
+        padding: 1rem 2rem;
+        color: var(--text-titel);
+        text-decoration: none;
+        border: white 1px solid;
+        border-radius: 5px ;
+        transition: 3s;
+        position: relative;
+
+        &:after {
+            content: "";
+            display: block;
+            position: absolute;
+            width: 100%;
+            bottom: 0;
+            height: 100%;
+            margin: 0;
+            left: 0;
+            background: white;
+            transition: all 0.4s ease-out 0s;
+            z-index: -1;
+            border-radius: 5px ;
+            opacity: 0;
+        }
+        &:hover:after {
+            opacity: 1;
+        }
+
+        &:hover {
+            color: black;
+            border-color: #000000;
+            transition: 0.2s;
+        }
+
+    }
+
+}
+
+/* Fin de main */
+
+/* Principio de about */
+
+    .about {
+        height: auto;
+        display: flex;
+        align-items: center;
+
+
+        &__card {
+            margin: 10rem auto;
+            width: 80%;
+            background-size: cover;
+            display: flex;
+            justify-content: space-evenly;
+            align-items: center;
+            box-shadow: 0px 0px 30px black;
+            border-radius: 30px;
+            transform-style: preserve-3d;
+
+            &:before {
+                content: "";
+                background: url("/images/pat.svg");
+                background-size: 100%;
+                display: block;
+                position: absolute;
+                width: 100%;
+                bottom: 10;
+                height: 100%;
+                left: 10;
+                transition: all 0.4s ease-out 0s;
+                z-index: -1;
+                transition: 0.3s;
+                border-radius: 30px;
+                -webkit-filter: drop-shadow(3px 3px 0px rgb(0, 0, 0) );
+                filter: drop-shadow(3px 3px 0px rgb(0, 0, 0));
+            }
+        }
+
+        &__titels {
+            width: 70%;
+            padding: 4rem;
+            transform: translateZ(50px);
+
+            h2 {
+                margin-bottom: 1rem;
+            }
+
+            p {
+                margin-bottom: 1rem;
+            }
+
+            ul {
+                display: flex;
+                justify-content: space-evenly;
+
+                li {
+                    list-style: none;
+                }
+            }
+        }
+
+        &__img {
+            width: 30%;
+            padding: 2rem;
+            transform: translateZ(50px);
+            
+
+            img {
+                width: 15rem;
+                box-shadow: 0px 0px 10px 5px rgb(0, 0, 0);
+            }
+        }
+
+    }
+
+/* Fin de about */
+
+/* Principio de projects */
+
+.projects {
+    
+    height: 70vh;
+
+    h1 {
+        text-align: center;
+        margin: auto 0 3rem 0;
+        font-size: 3rem;
+        background: var(--main-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    &__container{
+        margin: auto;
+        width: 80%;
+        display: flex;
+        
+
+          
+    }
+       
+
+    &__card {
+        position: relative;
+        color: #000000;
+        background: rgb(255, 255, 255);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 16rem;
+        height: 17rem;
+        margin: auto;
+        transition: 0.3s;
+        box-shadow: 2px 2px 7px 2px black;
+
+        &:before {
+            content: "";
+            background: var(--main-gradient);
+            background-repeat: no-repeat;
+            display: block;
+            position: absolute;
+            width: 100%;
+            bottom: 0;
+            height: 100%;
+            left: 0;
+            transition: all 0.4s ease-out 0s;
+            z-index: -1;
+            transition: 0.3s;
+            box-shadow: 2px 2px 7px 2px black;
+        }
+        &:hover:before {
+            transform: rotate(5deg);
+            
+        }
+
+        &:hover:after {
+            opacity: 1;
+        }
+
+        &:hover {
+
+            background: rgb(27, 27, 27);
+            transition: 0.3s;
+            img {
+                opacity: 1;
+                z-index: 1;
+                transition: 0.3s;
+            }
+
+            p {
+                font-weight: 400;
+                background: linear-gradient(rgba(0, 0, 0, 0.301) 20%, black );
+                backdrop-filter: blur(4px);
+                transition: 0.3s;
+                color: var(--text-titel);
+                box-shadow: -1px -1px 40px black;
+                text-shadow: -1px -1px 40px black;
+
+                
+            &:before {
+                content: "";
+                background: url("/images/topography 1.svg");
+                background-repeat: no-repeat;
+                display: block;
+                position: absolute;
+                width: 100%;
+                bottom: 0;
+                height: 100%;
+                left: 0;
+                transition: all 0.4s ease-out 0s;
+                z-index: -1;
+                transition: 0.3s;
+                filter: blur(1px);
+            }
+
+                a {
+                    opacity: 1;
+                }
+            }
+        }
+
+        img {
+            width: 50%;
+        }
+
+        p {
+            position: absolute;
+            width: 100%;
+            padding: 1rem 0 1rem 0;
+            color: transparent;
+            text-align: center;
+            z-index: 1;
+            bottom: 0;
+            transition: 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            
+
+            a {
+                opacity: 0;
+
+                img {
+                    margin-left: 0.7rem;
+                    width: 1.1rem;
+                }
+            }
+        }
+    }
+}
+
+/* Fin de projects */
+
+/* Principio de work */
+
+#work{
+    height: 100vh;
+}
+.work {
+
+
+    &__container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        h1 {
+            font-size: 3rem;
+            background: var(--main-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        div {
+            width: 90%;
+            display: flex;
+            justify-content: space-between;
+
+            .work__card {
+
+                background: url(/images/pat.svg);
+                background-position: bottom center;
+                background-repeat: no-repeat;
+                background-size: 200%;
+                width: 16rem;
+                height: 10rem;
+                margin: auto;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: space-evenly;
+                text-align: center;
+                border-radius: 15px;
+                box-shadow: 2px 2px 5px rgb(0, 0, 0);
+                z-index: 0;
+        
+                img {
+                    width: 4rem;
+                    height: auto;
+                }
+            }
+        }
+    }
+
+
+} 
+
+/* Fin de work */
+
+/* Redes */
+.sideRedes {
+    position: fixed;
+    top: 40vh;
+    left: 5vh;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    z-index: 0;
+    li {
+        
+        list-style: none;
+        transition: 0.3s ease-in;
+
+        &:hover {
+            transform: translateX(5px);
+            a {
+                svg {
+                    stop-color: var(--main-gradient);
+                }
+            }
+        }
+       
+
+        a {
+            svg {
+                width: 2rem;
+                fill: white;
+            }
+
+
+        }
+    }
+}
+
+
+
+@media screen and (max-width: 767px) { 
+
+    .navbar {
+
+        background: #00000000;
+
+        &__links {
+            background: #000000;
+            position: absolute;
+            right: 0px;
+            height: 100vh;
+            top: 8vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-evenly;
+            width: 100%;
+            transform: translateX(100%);
+            transition: 0.5s ease-in;
+            z-index: 1;
+            display: none;
+
+
+            .navbar__btnactive {
+                a {
+                    color: white;
+                }
+            }
+
+            li {
+                text-align: center;
+                width: 80%;
+                opacity: 0;
+
+                a {
+                    font-size: 1.5rem;
+                    color: var(--text-titel);
+                }
+
+            }
+        }
+
+        &__burger {
+            display: block;
+        }
+       
+    }
+
+    #main {
+
+        margin: auto;
+        
+        &:before {
+            background-size: 130%;
+        }
+
+        div {
+            width: 90%;
+            margin: auto;
+        }
+
+        h2, h1 {
+            font-size: 3.5rem;
+        }
+
+        h3 {
+            font-size: 1.7rem;
+        }
+    }
+
+    .about {
+        &__card {
+            flex-direction: column;
+            width: 95%;
+        }
+
+        &__img {
+            width: auto;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            margin: 0 0 4rem 0;
+            padding: 0;
+
+            image {
+                width: 100%;
+
+            }
+        }
+    }
+
+    .projects {
+
+        height: auto;
+
+        &__container {
+            flex-direction: column;
+            gap: 1rem;
+        }
+    }
+
+    .sideRedes {
+        display: none;
+    }
+
+
+}
+
+.navbar__active {
+    transform: translateX(0%);
+    display: flex;
+    background: #000000;
+}
+
+.toggle .line1 {
+    transform: rotate(-45deg) translate(-5px,6px);
+}
+
+.toggle .line2 {
+    opacity: 0;
+}
+
+.toggle .line3 {
+    transform: rotate(45deg) translate(-5px,-6px);
+}
+
+@keyframes navbarLinkFade{
+    from {
+        opacity: 0;
+        transform: translateX(50px);
+    }
+    to{
+        opacity: 1;
+        transform: translateX(0px);
+    }
+}
+
