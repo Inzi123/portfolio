@@ -735,6 +735,11 @@ body {
         &__card {
             flex-direction: column;
             width: 95%;
+            transform: none;
+        }
+
+        &__titels {
+            transform: none;
         }
 
         &__img {
@@ -744,6 +749,7 @@ body {
             justify-content: center;
             margin: 0 0 4rem 0;
             padding: 0;
+            transform: none;
 
             image {
                 width: 100%;

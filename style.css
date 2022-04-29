@@ -811,6 +811,12 @@ body {
         -ms-flex-direction: column;
             flex-direction: column;
     width: 95%;
+    -webkit-transform: none;
+            transform: none;
+  }
+  .about__titels {
+    -webkit-transform: none;
+            transform: none;
   }
   .about__img {
     width: auto;
@@ -823,6 +829,8 @@ body {
             justify-content: center;
     margin: 0 0 4rem 0;
     padding: 0;
+    -webkit-transform: none;
+            transform: none;
   }
   .about__img image {
     width: 100%;
