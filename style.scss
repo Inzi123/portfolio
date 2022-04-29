@@ -389,11 +389,22 @@ body {
             }
 
             ul {
-                display: flex;
-                justify-content: space-evenly;
+                display: grid;
+                row-gap: 0rem;
+                grid-auto-rows: 3rem;
+                grid-template-columns: repeat(auto-fill, minmax(8rem, 7fr));
+                align-items: start;
+                justify-content: start;
 
                 li {
                     list-style: none;
+                    display: flex;
+                    justify-content: start;
+                    align-items: center;
+
+                    img {
+                        
+                    }
                 }
             }
         }
@@ -419,6 +430,7 @@ body {
 
 .projects {
     
+        height: 90vh;
         margin: auto;
         width: 100%;
         display: flex;
@@ -504,6 +516,10 @@ body {
                 transition: 0.3s;
             }
 
+            svg {
+                fill: white;
+            }
+
             p {
                 font-weight: 400;
                 background: linear-gradient(rgba(0, 0, 0, 0.301) 20%, black );
@@ -540,6 +556,10 @@ body {
             width: 50%;
         }
 
+        svg {
+            width: 40%;
+        }
+
         p {
             position: absolute;
             width: 100%;
@@ -572,17 +592,27 @@ body {
 /* Principio de work */
 
 #work{
-    height: 100vh;
+    height: 60vh;
+    width: 100%;
 }
 .work {
 
+    display: flex;
+        flex-direction: column;
+        align-items: space-evenly;
+        justify-content: space-evenly;
 
     &__container {
+        height: 100%;
         display: flex;
         flex-direction: column;
         align-items: center;
+        justify-content: space-evenly;
+        
+
 
         h1 {
+            text-align: center;
             font-size: 3rem;
             background: var(--main-gradient);
             -webkit-background-clip: text;
@@ -770,6 +800,19 @@ body {
 
     .sideRedes {
         display: none;
+    }
+    
+    #work {
+        height: auto;
+        margin-top: 2rem;
+    }
+    .work {
+        height: auto;
+        &__container {
+            div {
+                flex-direction: column;
+            }
+        }
     }
 
 
