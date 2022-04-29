@@ -374,6 +374,7 @@ body {
             width: 70%;
             padding: 4rem;
             transform: translateZ(50px);
+            z-index: 0;
 
             h2 {
                 margin-bottom: 1rem;
@@ -400,6 +401,7 @@ body {
             width: 30%;
             padding: 2rem;
             transform: translateZ(50px);
+            z-index: 0;
             
 
             img {
