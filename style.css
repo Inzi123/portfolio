@@ -431,8 +431,8 @@ body {
   display: grid;
   row-gap: 0rem;
   grid-auto-rows: 3rem;
-  -ms-grid-columns: (minmax(8rem, 7fr))[auto-fill];
-      grid-template-columns: repeat(auto-fill, minmax(8rem, 7fr));
+  -ms-grid-columns: (minmax(7rem, 7fr))[auto-fit];
+      grid-template-columns: repeat(auto-fit, minmax(7rem, 7fr));
   -webkit-box-align: start;
       -ms-flex-align: start;
           align-items: start;
