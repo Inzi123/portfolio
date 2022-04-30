@@ -751,16 +751,10 @@ body {
                     margin-top: 0px;
                     width: 50%;
 
-                    
-                    select {
-                        option {
 
-                        }
-                    }
-                  }
                   
                   .form__field {
-                      margin: 0 auto;
+                    margin: 0 auto;
                     width: 92%;
                     border: 0;
                     border-bottom: 1px solid #ffffff;
@@ -771,7 +765,7 @@ body {
                     padding: 13px 0 0 0;
                     background: transparent;
                     transition: border-color 0.2s;
-
+                    border-radius: none;
                   }
                   .form__field::placeholder {
                     color: transparent;
