@@ -638,7 +638,7 @@ body {
   padding: 1rem 0 1rem 0;
   color: transparent;
   text-align: center;
-  z-index: 1;
+  z-index: -1;
   bottom: 0;
   -webkit-transition: 0.3s;
   transition: 0.3s;
@@ -932,6 +932,12 @@ body {
             flex-direction: column;
     gap: 1rem;
   }
+  .projects__card p {
+    z-index: -1;
+  }
+  .projects__card svg {
+    z-index: -1;
+  }
   .sideRedes {
     display: none;
   }
@@ -952,8 +958,12 @@ body {
     width: 95%;
     margin: 2rem auto 0 auto;
   }
+  .work__container div .work__card p {
+    z-index: -1;
+  }
   .work__container div .work__card img {
     width: 30%;
+    z-index: -1;
   }
 }
 
