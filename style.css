@@ -909,6 +909,7 @@ body {
   background: transparent;
   -webkit-transition: border-color 0.2s;
   transition: border-color 0.2s;
+  border-radius: none;
 }
 
 .form__right form div .form__field::-webkit-input-placeholder {
