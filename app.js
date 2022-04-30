@@ -8,7 +8,6 @@ const navSlide = () => {
 
     burger.addEventListener('click', () => {
         nav.classList.toggle('navbar__active');
-        navbar.classList.toggle('navbar__active');
 
         navLinks.forEach((link, index) =>{
             if(link.style.animation){
@@ -26,6 +25,12 @@ const navSlide = () => {
 };
 
 navSlide();
+
+
+
+
+
+
 
 $(window).scroll(function(){
     if($(window).scrollTop()){

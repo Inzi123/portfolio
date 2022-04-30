@@ -791,7 +791,7 @@ body {
 }
 
 .footer {
-  padding-top: 3rem;
+  padding: 3rem 0;
   width: 100%;
 }
 
@@ -837,7 +837,7 @@ body {
     position: absolute;
     right: 0px;
     height: 100vh;
-    top: 8vh;
+    top: 0vh;
     display: -webkit-box;
     display: -ms-flexbox;
     display: flex;
@@ -848,10 +848,10 @@ body {
     -webkit-box-align: center;
         -ms-flex-align: center;
             align-items: center;
-    -webkit-box-pack: space-evenly;
-        -ms-flex-pack: space-evenly;
-            justify-content: space-evenly;
-    width: 100%;
+    -webkit-box-pack: center;
+        -ms-flex-pack: center;
+            justify-content: center;
+    width: 60%;
     -webkit-transform: translateX(100%);
             transform: translateX(100%);
     -webkit-transition: 0.5s ease-in;
@@ -863,6 +863,7 @@ body {
     color: white;
   }
   .navbar__links li {
+    margin-top: 6rem;
     text-align: center;
     width: 80%;
     opacity: 0;
@@ -873,6 +874,7 @@ body {
   }
   .navbar__burger {
     display: block;
+    z-index: 1;
   }
   #main {
     margin: auto;
