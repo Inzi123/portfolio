@@ -25,7 +25,7 @@
                 <a href="#projects">Work</a>
             </li>
             <li class="navbar__btnactive">
-                <a href="#">Contacto</a>
+                <a href="#form">Contacto</a>
                 <img src="/icons/arrowDown.png" alt="">
             </li>
         </ul>
@@ -123,6 +123,52 @@
             </div>
         </div>
     </section>
+
+    <section id="form" class="form">
+        <div class="form__card">
+ 
+         
+         <div class="form__right">
+             <h1>Contacto</h1>
+             <form action="https://formspree.io/f/mzbojgap" method="POST">
+                 <div class="form__container">
+                     <div class="form__group field">
+                         <input type="input" class="form__field" placeholder="Nombre" name="nombre" id='nombre' required />
+                         <label for="nombre" class="form__label">Name*</label>
+                       </div>
+                       <div class="form__group field">
+                         <input type="input" class="form__field" placeholder="Apellido" name="Apellido" id='apellido' required />
+                         <label for="apellido" class="form__label">Surname*</label>
+                       </div>
+                 </div>
+                 <div>
+                     <div class="form__group field">
+                         <input type="input" class="form__field" placeholder="Email" name="email" id='email' required />
+                         <label for="email" class="form__label">Email*</label>
+                       </div>
+                       <div class="form__group field">
+                         <input type="input" class="form__field" placeholder="Tel" name="tel" id='tel' />
+                         <label for="tel" class="form__label">Tel</label>
+                       </div>
+                 </div>
+                 
+                 <div>
+                     <textarea placeholder="Escriba su mensaje"  name="mensaje" id="" cols="30" rows="10"></textarea>
+                 </div>
+                     <input target="_blank" class="form__send" type="submit" name="enviar" value="Enviar">
+             </form>
+         </div>
+ 
+        </div>
+ 
+        <div class="form__info">
+         <p><img src="/images/telephone.png" alt=""> Tel: +49 15730063025</p>
+         <p> <img src="/images/envelope.png" alt=""> inzirillolucas01@gmail.com</p>
+ 
+     </div>
+        
+     </section>
+ 
 
     <footer class="footer">
         <ul class="footer__redes">
