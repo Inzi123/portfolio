@@ -1009,11 +1009,10 @@ body {
   margin: 2rem auto 0 auto;
   padding: 0.4em 4em;
   font-size: 1rem;
-  background: var(--main-gradient);
+  background: transparent;
   border: 0;
   color: white;
-  -webkit-box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.349);
-          box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.349);
+  border: 1px solid white;
   border-radius: 5px;
   -webkit-transition: 0.3s;
   transition: 0.3s;
@@ -1023,8 +1022,8 @@ body {
 .form__send:hover {
   -webkit-box-shadow: none;
           box-shadow: none;
-  -webkit-transform: scale(1.05);
-          transform: scale(1.05);
+  background-color: white;
+  color: black;
 }
 
 .form__info {
