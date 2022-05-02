@@ -3,7 +3,7 @@
   --main-gradient: linear-gradient(90deg, #ff00d6 0%, #001AFF 100%);
   --text-titel: white;
   --text-color: rgb(173, 173, 173);
-  --bg-color: rgb(39, 39, 39);
+  --bg-color: rgb(12, 12, 12);
 }
 
 * {
@@ -17,6 +17,18 @@ body {
   background-color: #0e0e0e;
   font-family: 'Roboto', sans-serif;
   color: var(--text-titel);
+  background-image: url("/images/topography 1.svg");
+  background-size: 40%;
+  background-repeat: repeat;
+  display: block;
+  position: absolute;
+  width: 100%;
+  bottom: 0;
+  height: 100vh;
+  left: 0;
+  -webkit-transition: all 0.4s ease-out 0s;
+  transition: all 0.4s ease-out 0s;
+  z-index: -1;
 }
 
 /* Principio de navbar */
@@ -383,6 +395,7 @@ body {
   border-radius: 30px;
   -webkit-transform-style: preserve-3d;
           transform-style: preserve-3d;
+  background-color: var(--bg-color);
 }
 
 .about__card:before {
@@ -401,8 +414,6 @@ body {
   -webkit-transition: 0.3s;
   transition: 0.3s;
   border-radius: 30px;
-  -webkit-filter: drop-shadow(3px 3px 0px black);
-  filter: drop-shadow(3px 3px 0px black);
 }
 
 .about__titels {
@@ -746,6 +757,7 @@ body {
   -webkit-box-shadow: 2px 2px 5px black;
           box-shadow: 2px 2px 5px black;
   z-index: 0;
+  background-color: var(--bg-color);
 }
 
 .work__container div .work__card img {
@@ -783,13 +795,13 @@ body {
   width: 60%;
   height: 90%;
   margin-top: 10rem;
-  background: black;
-  background-image: url("/images/topography 1.svg");
-  background-repeat: repeat;
-  background-size: 70%;
+  background: var(--bg-color);
+  background-image: url("/images/pat.svg");
+  background-repeat: no-repeat;
+  background-size: cover;
   border-radius: 10px;
-  -webkit-box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.336);
-          box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.336);
+  -webkit-box-shadow: 2px 2px 5px black;
+          box-shadow: 2px 2px 5px black;
 }
 
 .form__left {
