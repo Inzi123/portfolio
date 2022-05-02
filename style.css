@@ -1193,14 +1193,14 @@ body {
     z-index: 2;
   }
   #main {
-    margin: auto;
+    margin: 0 auto;
   }
   #main:before {
     background-size: 130%;
   }
   #main div {
     width: 90%;
-    margin: auto;
+    margin: 0 auto;
   }
   #main h2, #main h1 {
     font-size: 3.5rem;
