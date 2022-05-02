@@ -253,7 +253,6 @@ body {
 /* Fin de navbar */
 /* Principio de main */
 #main {
-  min-height: 100vh;
   height: auto;
   margin: auto;
   width: 100%;
@@ -1145,6 +1144,9 @@ body {
 }
 
 @media screen and (max-width: 767px) {
+  body {
+    background-size: 130%;
+  }
   .navbar {
     background: #00000000;
   }
@@ -1332,7 +1334,7 @@ body {
             flex-direction: column;
   }
   #whiteLine {
-    margin: 0rem auto;
+    margin: 1rem auto;
   }
 }
 
