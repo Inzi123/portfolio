@@ -244,7 +244,7 @@ body {
 
 #main {
 
-
+    min-height: 100vh;
     height: auto;
     margin: auto;
     width: 100%;
@@ -269,7 +269,7 @@ body {
 
 
     div {
-        padding: 10rem 0 2rem 0;
+        padding: 10rem 0 0rem 0;
         margin: 0 auto;
         width: 70%;
         display: flex;
