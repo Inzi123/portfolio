@@ -244,7 +244,8 @@ body {
 
 #main {
 
-    height: 100vh;
+    min-height: 100vh;
+    height: auto;
     margin: auto;
     width: 100%;
     position: relative;
@@ -260,8 +261,7 @@ body {
             display: block;
             position: absolute;
             width: 100%;
-            bottom: 0;
-            height: 100vh;
+            height: auto;
             left: 0;
             transition: all 0.4s ease-out 0s;
             z-index: -1;
@@ -269,7 +269,7 @@ body {
 
 
     div {
-        padding: 10rem 0 0 0;
+        padding: 10rem 0 3rem 0;
         margin: auto;
         width: 70%;
         display: flex;
@@ -443,7 +443,7 @@ body {
 
 .projects {
     
-        height: 90vh;
+        height: 100vh;
         margin: auto;
         width: 100%;
         display: flex;
@@ -489,7 +489,7 @@ body {
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        width: 16rem;
+        width: 24%;
         height: 17rem;
         margin: auto;
         transition: 0.3s;
@@ -605,7 +605,7 @@ body {
 /* Principio de work */
 
 #work{
-    height: 60vh;
+    height: 70vh;
     width: 100%;
 }
 .work {
@@ -642,7 +642,7 @@ body {
                 background-position: bottom center;
                 background-repeat: no-repeat;
                 background-size: 200%;
-                width: 16rem;
+                width: 24%;
                 height: 13rem;
                 margin: auto;
                 display: flex;
@@ -684,7 +684,7 @@ body {
 
 .form {
     width: 100%;
-    height: 100vh;
+    height: auto;
     background-image: url(/images/formbg.png);
     background-size: cover;
     display: flex;
@@ -934,6 +934,7 @@ body {
 
     padding: 1rem 0;
     width: 100%;
+    height: auto;
 
     &__redes {
 
@@ -971,6 +972,14 @@ body {
     }
 }
 
+
+#whiteLine {
+    width: 70%;
+    height: 2px;
+    margin: 0 auto;
+    padding: 0;
+    background-color: white;
+}
 
 
 @media screen and (max-width: 767px) { 
@@ -1082,6 +1091,9 @@ body {
         }
 
         &__card {
+
+            width: 75%;
+
             p {
                 z-index: -1;
             }
@@ -1169,6 +1181,10 @@ body {
         &__info {
             flex-direction: column;
         }
+    }
+
+    #whiteLine {
+        margin: 1rem auto;
     }
 
 
