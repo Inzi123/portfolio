@@ -266,6 +266,7 @@ body {
   background-image: url("/images/topography 1.svg");
   background-size: 40%;
   background-repeat: repeat;
+  background-color: black;
   display: block;
   position: absolute;
   width: 100%;
@@ -737,7 +738,7 @@ body {
   background-repeat: no-repeat;
   background-size: 200%;
   width: 16rem;
-  height: 10rem;
+  height: 13rem;
   margin: auto;
   display: -webkit-box;
   display: -ms-flexbox;
@@ -749,15 +750,25 @@ body {
   -webkit-box-align: center;
       -ms-flex-align: center;
           align-items: center;
-  -webkit-box-pack: space-evenly;
-      -ms-flex-pack: space-evenly;
-          justify-content: space-evenly;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
   text-align: center;
   border-radius: 15px;
   -webkit-box-shadow: 2px 2px 5px black;
           box-shadow: 2px 2px 5px black;
   z-index: 0;
   background-color: var(--bg-color);
+}
+
+.work__container div .work__card h3 {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.work__container div .work__card p {
+  padding: 0.4rem 1rem 0 1rem;
+  font-weight: 300;
 }
 
 .work__container div .work__card img {
@@ -1254,13 +1265,30 @@ body {
   .work__container div .work__card {
     width: 95%;
     margin: 2rem auto 0 auto;
+    -webkit-box-align: start;
+        -ms-flex-align: start;
+            align-items: flex-start;
+    -webkit-box-pack: space-evenly;
+        -ms-flex-pack: space-evenly;
+            justify-content: space-evenly;
+    height: 11rem;
+  }
+  .work__container div .work__card h3 {
+    z-index: -1;
+    text-align: left;
+    padding-left: 1rem;
   }
   .work__container div .work__card p {
     z-index: -1;
+    text-align: left;
+    padding-left: 1rem;
+    padding-bottom: 1rem;
   }
   .work__container div .work__card img {
-    width: 30%;
+    width: 15%;
     z-index: -1;
+    padding-left: 1rem;
+    padding-top: 1rem;
   }
   .form__card {
     display: -webkit-box;
