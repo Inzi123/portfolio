@@ -28,7 +28,7 @@ body {
 }
 
 .navbar {
-  width: 70%;
+  width: 80%;
   height: 70px;
   margin: auto;
   display: -webkit-box;
@@ -86,7 +86,7 @@ body {
 }
 
 .navbar__links a {
-  color: var(--text-color);
+  color: var(--text-titel);
   text-decoration: none;
   display: inline-block;
   position: relative;
@@ -120,8 +120,9 @@ body {
 }
 
 .navbar__btnactive {
-  background-color: rgba(102, 102, 102, 0.185);
-  border-radius: 5px;
+  background: -webkit-gradient(linear, left top, right top, from(#ff00d43d), color-stop(60%, #001aff36));
+  background: linear-gradient(90deg, #ff00d43d 0%, #001aff36 60%);
+  border-radius: 20px;
   -webkit-backdrop-filter: blur(1px);
           backdrop-filter: blur(1px);
   -webkit-transition: 0.3s;
@@ -143,7 +144,7 @@ body {
 
 .navbar__btnactive a {
   padding: 0.5rem 1rem;
-  color: var(--text-color);
+  color: var(--text-titel);
   font-weight: 500;
 }
 
@@ -213,6 +214,7 @@ body {
 .main {
   height: 100vh;
   background-image: url(/images/topography1.svg);
+  position: relative;
 }
 
 .main div {
@@ -233,7 +235,6 @@ body {
   -webkit-box-align: start;
       -ms-flex-align: start;
           align-items: flex-start;
-  position: relative;
   -webkit-box-shadow: 0px 5px 8px 0px #000000;
           box-shadow: 0px 5px 8px 0px #000000;
 }
@@ -326,7 +327,7 @@ body {
 }
 
 .about {
-  height: 100vh;
+  height: 200vh;
   background-color: var(--bg-color);
   background-image: url(/images/bg3.png);
   background-size: cover;
@@ -430,6 +431,15 @@ body {
   opacity: 1;
   -webkit-transition: 1.3s;
   transition: 1.3s;
+}
+
+.parallaxit {
+  -webkit-transition: 0.6s -webkit-transform ease-out;
+  transition: 0.6s -webkit-transform ease-out;
+  transition: 0.6s transform ease-out;
+  transition: 0.6s transform ease-out, 0.6s -webkit-transform ease-out;
+  -webkit-transform: translate3d(var(--parallax-x), var(--parallax-y), 0px);
+          transform: translate3d(var(--parallax-x), var(--parallax-y), 0px);
 }
 
 .anim .anim-left {
