@@ -369,7 +369,6 @@ body {
     background-color: var(--bg-color);
     overflow-x: hidden;
     overflow-y: hidden;
-    position: relative;
     display: flex;
     align-items: center;
 
@@ -380,7 +379,7 @@ body {
         width: 100%;
         height: 100%;
         position:absolute;
-        top:0px;
+        top:100%;
         left:0px;
     }
 
@@ -399,8 +398,8 @@ body {
             width: 50%;
             display: flex;
             flex-direction: column;
-            transform: translate(0,0);
-            opacity: 1;
+            transform: translate(-150px,0);
+            opacity: 0;
             transition: 1.3s;
 
             h2 {
@@ -445,8 +444,8 @@ body {
         }
 
         &-img {
-            transform: translate(0,0);
-            opacity: 1;
+            transform: translate(150px,0);
+            opacity: 0;
             transition: 1.3s;
             display: flex;
             justify-content: center;
@@ -479,13 +478,13 @@ body {
 }
 
 .anim .anim-left{
-	transform: translate(-150px,0);
-    opacity: 0;	
+	transform: translate(0,0);
+    opacity: 1;	
 }
 
 .anim .anim-right{
-	transform: translate(150px,0);
-    opacity: 0;	
+	transform: translate(0,0);
+    opacity: 1;	
 }
 
 .work {

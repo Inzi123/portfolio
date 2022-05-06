@@ -401,7 +401,6 @@ body {
   background-color: var(--bg-color);
   overflow-x: hidden;
   overflow-y: hidden;
-  position: relative;
   display: -webkit-box;
   display: -ms-flexbox;
   display: flex;
@@ -417,7 +416,7 @@ body {
   width: 100%;
   height: 100%;
   position: absolute;
-  top: 0px;
+  top: 100%;
   left: 0px;
 }
 
@@ -446,9 +445,9 @@ body {
   -webkit-box-direction: normal;
       -ms-flex-direction: column;
           flex-direction: column;
-  -webkit-transform: translate(0, 0);
-          transform: translate(0, 0);
-  opacity: 1;
+  -webkit-transform: translate(-150px, 0);
+          transform: translate(-150px, 0);
+  opacity: 0;
   -webkit-transition: 1.3s;
   transition: 1.3s;
 }
@@ -505,9 +504,9 @@ body {
 }
 
 .about__container-img {
-  -webkit-transform: translate(0, 0);
-          transform: translate(0, 0);
-  opacity: 1;
+  -webkit-transform: translate(150px, 0);
+          transform: translate(150px, 0);
+  opacity: 0;
   -webkit-transition: 1.3s;
   transition: 1.3s;
   display: -webkit-box;
@@ -547,15 +546,15 @@ body {
 }
 
 .anim .anim-left {
-  -webkit-transform: translate(-150px, 0);
-          transform: translate(-150px, 0);
-  opacity: 0;
+  -webkit-transform: translate(0, 0);
+          transform: translate(0, 0);
+  opacity: 1;
 }
 
 .anim .anim-right {
-  -webkit-transform: translate(150px, 0);
-          transform: translate(150px, 0);
-  opacity: 0;
+  -webkit-transform: translate(0, 0);
+          transform: translate(0, 0);
+  opacity: 1;
 }
 
 .work {
