@@ -107,6 +107,6 @@ function offset(el) {
 
 document.querySelector(".main__container").addEventListener("mousemove", function(e) {
     parallaxIt(e, this.querySelector("p"), this, 80)
-    parallaxIt(e, this.querySelector("h1"), this, 60)
+    parallaxIt(e, this.querySelector("h1"), this, 70)
     parallaxIt(e, this.querySelector("h2"), this, 60)
 })

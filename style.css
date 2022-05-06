@@ -59,12 +59,22 @@ body {
 }
 
 .navbar__logo img {
-  width: 20px;
+  content: url("/icons/logoColor.png");
   -webkit-filter: drop-shadow(0px 0px 9px 15px rgba(0, 0, 0, 0.534));
           filter: drop-shadow(0px 0px 9px 15px rgba(0, 0, 0, 0.534));
-  -webkit-transition: 0.4s;
-  transition: 0.4s;
+  -webkit-filter: brightness(0) invert(1);
+          filter: brightness(0) invert(1);
+  -webkit-transition: 0.3s;
+  transition: 0.3s;
   cursor: pointer;
+  width: 20px;
+  height: 30px;
+}
+
+.navbar__logo img:hover {
+  -webkit-filter: none;
+          filter: none;
+  content: url("/icons/logoColor.png");
 }
 
 .navbar__links {
@@ -439,7 +449,8 @@ body {
 
 .about__container-titles h2 {
   font-size: 2rem;
-  background: var(--main-gradient);
+  background: -webkit-gradient(linear, left top, right top, from(#ff00d6), color-stop(20%, #001AFF));
+  background: linear-gradient(90deg, #ff00d6 0%, #001AFF 20%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
