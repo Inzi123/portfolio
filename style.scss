@@ -427,6 +427,7 @@ body {
         top: 5%;
         border-radius: 0px;
         border: none;
+        backdrop-filter: blur(0);
 
         &__links {
             background: #000000;
