@@ -4,7 +4,7 @@
     --main-gradient: linear-gradient(90deg, #ff00d6 0%, #001AFF 100%);
     --text-titel: white;
     --text-color: rgb(173, 173, 173);
-    --bg-color: rgb(0, 0, 0);
+    --bg-color: rgb(0, 3, 26);
     $color-box-1 : #0f9bc0;
 
   }
@@ -118,7 +118,7 @@ body {
         
 
         &__btnactive {
-            background: linear-gradient( 90deg ,#ff00d43d 0%, #001aff36 60%);
+            background: linear-gradient( 90deg ,#ff00d485 0%, #001aff96 60%);
             border-radius: 20px;
             backdrop-filter: blur(1px);
             transition: 0.3s;
@@ -204,10 +204,54 @@ body {
 
 /* Main */
 
+@keyframes fadeIn { 
+    from {
+        opacity: 0;
+      }
+    
+      to {
+        opacity: 100;
+      }
+  }
+
+  @keyframes fadeOut { 
+    from {
+        opacity: 100;
+        
+      }
+    
+      to {
+        opacity: 0;
+      }
+  }
+
 .main {
     height: 100vh;
-    background-image: url(/images/topography1.svg);
     position: relative;
+
+    &::after {
+        content: '';
+        background-image: url(/images/topography1.svg);
+        background-size: 50%;
+        width: 100%;
+        height: 100%;
+        position:absolute;
+        top:0px;
+        left:0px;
+        z-index: -1;
+        animation: fadeOut 4s infinite alternate ease-in-out;
+    }
+
+    &::before {
+        content: '';
+        background-image: url(/images/topography2.svg);
+        background-size: 50%;
+        height: 100%;
+        width: 100%;
+        position: absolute;
+        z-index: -1;
+        animation: fadeIn 4s infinite alternate ease-in-out;
+    }
 
 
 
@@ -227,10 +271,10 @@ body {
             margin: 0 auto;
             font-size: 1.3rem;
             font-weight: 200;
-            background-color: rgba(211, 211, 211, 0.123);
+            background-color: rgba(211, 211, 211, 0.089);
             padding: 0 1rem;
             border-radius: 5px;
-            backdrop-filter: blur(2px);
+            backdrop-filter: blur(5px);
             text-align: center;
         }
         h2 {
@@ -428,6 +472,7 @@ body {
         border-radius: 0px;
         border: none;
         backdrop-filter: blur(0);
+        box-shadow: none;
 
         &__links {
             background: #000000;
@@ -500,6 +545,9 @@ body {
     }
     
     .about {
+
+        background-position-x: -110%;
+
         &__container {
             flex-direction: column;
 
