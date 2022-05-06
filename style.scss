@@ -4,7 +4,7 @@
     --main-gradient: linear-gradient(90deg, #ff00d6 0%, #001AFF 100%);
     --text-titel: white;
     --text-color: rgb(173, 173, 173);
-    --bg-color: rgb(0, 3, 26);
+    --bg-color: rgb(0, 2, 20);
     $color-box-1 : #0f9bc0;
 
   }
@@ -365,12 +365,13 @@ body {
 }
 
 .about {
-    height: 100vh;
+    min-height: 100vh;
     background-color: var(--bg-color);
-    background-image: url(/images/bg3.png);
-    background-size: cover;
     overflow-x: hidden;
+    overflow-y: hidden;
     position: relative;
+    display: flex;
+    align-items: center;
 
     &:before {
         content: '';
@@ -394,6 +395,7 @@ body {
         justify-content: space-evenly;
 
         &-titles {
+            margin-top: 4rem;
             width: 50%;
             display: flex;
             flex-direction: column;
@@ -410,6 +412,7 @@ body {
 
             p {
                 margin: 0.5rem 0;
+                color: var(--text-color);
             }
             
             ul {
@@ -430,6 +433,7 @@ body {
                     align-items: center;
                     background: rgba(31, 31, 31, 0.575);
                     border-radius: 10px;
+                    z-index: 1;
                     
 
                     img {
@@ -444,6 +448,26 @@ body {
             transform: translate(0,0);
             opacity: 1;
             transition: 1.3s;
+            display: flex;
+            justify-content: center;
+            position: relative;
+
+
+            img {
+                width: 80%;
+            }
+
+            &::before {
+                content: '';
+                background: var(--main-gradient);
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                z-index: -1;
+                border-radius: 50%;
+                filter: blur(50px);
+                transform: rotate(45deg);
+            }
         }
     }
 }
@@ -567,6 +591,7 @@ body {
             }
 
             &-img {
+                margin: 5rem 0 9rem 0;
                 display: flex;
                 justify-content: center;
                 img {
