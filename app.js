@@ -26,6 +26,8 @@ const navSlide = () => {
 
 navSlide();
 
+const navbar = document.querySelector('.navbar')
+
 
 
 
@@ -61,5 +63,27 @@ $window.on('scroll', function () {
     }
 });
 
+
+
+
+/* Scroll */
+window.addEventListener('scroll', () => {
+    let page = this;
+    let pageTop = this.scrollY;
+    let pageHeight = this.outerHeight / 2 ;
+    
+    let frames = document.querySelectorAll('.about__container');
+    frames.forEach( frame => {
+      let frameTop = frame.offsetTop;
+      let frameHeight = frame.offsetHeight;
+      
+      if ( pageTop  >= frameTop - pageHeight &&
+          pageTop  < frameTop + frameHeight/2 ){
+        frame.classList.add('anim');
+      }else{
+        frame.classList.remove('anim');
+      }
+    });
+  });
 
 
