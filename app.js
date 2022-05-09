@@ -91,7 +91,7 @@ window.addEventListener('scroll', () => {
     let pageTop = this.scrollY;
     let pageHeight = this.outerHeight / 2 ;
     
-    let prueba = document.querySelectorAll('.work__container');
+    let prueba = document.querySelectorAll('.work');
     prueba.forEach( frame => {
       let frameTop = frame.offsetTop;
       let frameHeight = frame.offsetHeight;
