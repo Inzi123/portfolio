@@ -557,8 +557,196 @@ body {
   opacity: 1;
 }
 
+.anim .anim-top {
+  -webkit-transform: translate(0, 0);
+          transform: translate(0, 0);
+  opacity: 1;
+}
+
+.anim .anim-bottom {
+  -webkit-transform: translate(0, 0);
+          transform: translate(0, 0);
+  opacity: 1;
+}
+
 .work {
   min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.work__container {
+  width: 90%;
+  margin: auto;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: space-evenly;
+      -ms-flex-pack: space-evenly;
+          justify-content: space-evenly;
+}
+
+.work__container-cardright {
+  background-color: white;
+  width: 45%;
+  height: 26rem;
+  -webkit-transform: translate(0, 150px);
+          transform: translate(0, 150px);
+  opacity: 0;
+  -webkit-transition: 1.3s;
+  transition: 1.3s;
+  -webkit-box-shadow: 2px 2px 5px 3px black;
+          box-shadow: 2px 2px 5px 3px black;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+}
+
+.work__container-cardright p {
+  padding: 1rem;
+  text-align: center;
+  color: white;
+  width: 50%;
+  -webkit-transition: 0.4s ease-out;
+  transition: 0.4s ease-out;
+  opacity: 1;
+  z-index: 1;
+  position: relative;
+  -webkit-transform: scale(0);
+          transform: scale(0);
+}
+
+.work__container-cardright p:before {
+  content: '';
+  height: 8rem;
+  width: 8rem;
+  position: absolute;
+  background: url(/images/topography1.svg);
+  background-color: var(--bg-color);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: auto;
+  z-index: -1;
+  border-radius: 100%;
+  -webkit-transition: 0.2s;
+  transition: 0.2s;
+  -webkit-box-shadow: 2px 2px 7px rgba(0, 0, 0, 0.486);
+          box-shadow: 2px 2px 7px rgba(0, 0, 0, 0.486);
+}
+
+.work__container-cardright:hover p {
+  -webkit-transform: scale(1);
+          transform: scale(1);
+}
+
+.work__container-cardright:hover::after {
+  -webkit-filter: grayscale(100);
+          filter: grayscale(100);
+  -webkit-transform: scale(1.2);
+          transform: scale(1.2);
+}
+
+.work__container-cardright:after {
+  content: '';
+  position: absolute;
+  background: url(/images/beAuPair.png);
+  background-size: 50%;
+  background-position-y: 40%;
+  background-position-x: 50%;
+  background-repeat: no-repeat;
+  width: 100%;
+  height: 100%;
+  -webkit-transition: 0.2s ease-in;
+  transition: 0.2s ease-in;
+}
+
+.work__container-cardleft {
+  background-color: white;
+  width: 45%;
+  height: 26rem;
+  -webkit-transform: translate(0, -150px);
+          transform: translate(0, -150px);
+  opacity: 0;
+  -webkit-transition: 1.3s;
+  transition: 1.3s;
+  position: relative;
+  -webkit-box-shadow: 2px 2px 5px 3px black;
+          box-shadow: 2px 2px 5px 3px black;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+}
+
+.work__container-cardleft p {
+  padding: 1rem;
+  text-align: center;
+  color: white;
+  width: 50%;
+  -webkit-transition: 0.4s ease-out;
+  transition: 0.4s ease-out;
+  opacity: 1;
+  z-index: 1;
+  position: relative;
+  -webkit-transform: scale(0);
+          transform: scale(0);
+}
+
+.work__container-cardleft p:before {
+  content: '';
+  height: 8rem;
+  width: 8rem;
+  position: absolute;
+  background: url(/images/topography1.svg);
+  background-color: var(--bg-color);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: auto;
+  z-index: -1;
+  border-radius: 100%;
+  -webkit-transition: 0.2s;
+  transition: 0.2s;
+  -webkit-box-shadow: 2px 2px 7px rgba(0, 0, 0, 0.486);
+          box-shadow: 2px 2px 7px rgba(0, 0, 0, 0.486);
+}
+
+.work__container-cardleft:hover p {
+  -webkit-transform: scale(1);
+          transform: scale(1);
+}
+
+.work__container-cardleft:hover::after {
+  -webkit-filter: grayscale(100);
+          filter: grayscale(100);
+  -webkit-transform: scale(1.2);
+          transform: scale(1.2);
+}
+
+.work__container-cardleft:after {
+  content: '';
+  position: absolute;
+  background: url(/images/logo-normal.svg);
+  background-size: 50%;
+  background-position: center;
+  background-repeat: no-repeat;
+  width: 100%;
+  height: 100%;
+  -webkit-transition: 0.2s ease-in;
+  transition: 0.2s ease-in;
 }
 
 @media screen and (max-width: 767px) {
@@ -624,6 +812,12 @@ body {
   .sideRedes {
     display: none;
   }
+  .main::after {
+    background-size: 100%;
+  }
+  .main::before {
+    background-size: 100%;
+  }
   .main div {
     width: 95%;
     height: 80vh;
@@ -657,6 +851,16 @@ body {
   }
   .about__container-img img {
     width: 70%;
+  }
+  .work__container {
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+        -ms-flex-direction: column;
+            flex-direction: column;
+    gap: 2rem;
+  }
+  .work__container div {
+    width: 100%;
   }
 }
 

@@ -86,6 +86,25 @@ window.addEventListener('scroll', () => {
     });
   });
 
+  window.addEventListener('scroll', () => {
+    let page = this;
+    let pageTop = this.scrollY;
+    let pageHeight = this.outerHeight / 2 ;
+    
+    let prueba = document.querySelectorAll('.work__container');
+    prueba.forEach( frame => {
+      let frameTop = frame.offsetTop;
+      let frameHeight = frame.offsetHeight;
+      
+      if ( pageTop  >= frameTop - pageHeight &&
+          pageTop  < frameTop + frameHeight/2 ){
+        frame.classList.add('anim');
+      }else{
+        frame.classList.remove('anim');
+      }
+    });
+  });
+
   /* Parallax */
 
   var parallaxIt = function(e, target, parent, movement) {
