@@ -868,8 +868,8 @@ body {
 }
 
 .footer__redes li:hover {
-  -webkit-transform: translateX(5px);
-          transform: translateX(5px);
+  -webkit-transform: translateY(5px);
+          transform: translateY(5px);
 }
 
 .footer__redes li:hover a svg {
