@@ -316,8 +316,8 @@ body {
   background-color: rgba(211, 211, 211, 0.089);
   padding: 0 1rem;
   border-radius: 5px;
-  -webkit-backdrop-filter: blur(5px);
-          backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(2px);
+          backdrop-filter: blur(2px);
   text-align: center;
 }
 
@@ -621,6 +621,45 @@ body {
   -webkit-box-align: center;
       -ms-flex-align: center;
           align-items: center;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+}
+
+.work__container-cardright a {
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  position: absolute;
+}
+
+.work__container-cardright h4 {
+  width: 100%;
+  padding: 1rem 0;
+  text-align: center;
+  position: absolute;
+  color: var(--text-color);
+  background: url(/images/topography1.svg);
+  background-color: var(--bg-color);
+  bottom: 0;
+  font-weight: 300;
+  opacity: 0;
+  -webkit-transition: 0.3s;
+  transition: 0.3s;
+}
+
+.work__container-cardright h4 span {
+  padding: 1px 4px;
+  background-color: #55555571;
+  border-radius: 5px;
+  font-weight: 300;
+  -webkit-backdrop-filter: blur(1px);
+          backdrop-filter: blur(1px);
+}
+
+.work__container-cardright:hover h4 {
+  opacity: 1;
 }
 
 .work__container-cardright p {
@@ -704,6 +743,10 @@ body {
   -webkit-box-align: center;
       -ms-flex-align: center;
           align-items: center;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
 }
 
 .work__container-cardleft p {
@@ -738,6 +781,41 @@ body {
   transition: 0.2s;
   -webkit-box-shadow: 2px 2px 7px rgba(0, 0, 0, 0.486);
           box-shadow: 2px 2px 7px rgba(0, 0, 0, 0.486);
+}
+
+.work__container-cardleft a {
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  position: absolute;
+}
+
+.work__container-cardleft h4 {
+  width: 100%;
+  padding: 1rem 0;
+  text-align: center;
+  position: absolute;
+  color: var(--text-color);
+  background: url(/images/topography1.svg);
+  background-color: var(--bg-color);
+  bottom: 0;
+  font-weight: 300;
+  opacity: 0;
+  -webkit-transition: 0.3s;
+  transition: 0.3s;
+}
+
+.work__container-cardleft h4 span {
+  padding: 1px 4px;
+  background-color: #55555571;
+  border-radius: 5px;
+  font-weight: 300;
+  -webkit-backdrop-filter: blur(1px);
+          backdrop-filter: blur(1px);
+}
+
+.work__container-cardleft:hover h4 {
+  opacity: 1;
 }
 
 .work__container-cardleft:hover p {
