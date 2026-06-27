@@ -1,0 +1,1387 @@
+:root {
+  color-scheme: dark;
+  --bg: #01040a;
+  --blue-deep: #0a1130;
+  --blue-glow: #1f3bd6;
+  --blue-soft: #2d52ff;
+  --panel: rgba(13, 16, 32, 0.72);
+  --panel-2: #0c1024;
+  --text: #c9c9c9;
+  --muted: #c9c9c9;
+  --line: rgba(255, 255, 255, 0.08);
+  --accent: #ff4242;
+}
+
+* { box-sizing: border-box; }
+
+/* ---------- LOADING SCREEN ----------
+   A 0→100 counter whose digits roll upward like an odometer, then the
+   overlay fades away to reveal the page. ~3s total. */
+.loader {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: clamp(28px, 6vw, 72px);
+  background: #01040a;
+  animation: loader-out 0.7s ease 3.5s forwards;
+}
+
+/* Film grain over the loader, matching the page grain. */
+.loader::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+/* The counter sits bottom-right; a fixed-height window clips the reel so
+   only one number shows at a time. */
+.loader__counter {
+  --digit-h: clamp(4rem, 16vw, 11rem);
+  display: flex;
+  align-items: baseline;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: #c9c9c9;
+  font-size: var(--digit-h);
+  position: relative;
+  z-index: 1; /* keep digits above the grain layer */
+}
+
+/* Each place value has its own clipping window + reel, so only the digit
+   that changes rolls (like a real odometer). */
+.loader__digit {
+  height: var(--digit-h);
+  overflow: hidden;
+}
+
+.loader__reel {
+  display: flex;
+  flex-direction: column;
+  /* JS sets transform: translateY to roll just this digit. */
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.loader__reel span {
+  height: var(--digit-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1ch;
+}
+
+.loader__pct {
+  font-size: 0.4em;
+  margin-left: 0.1em;
+  color: #c9c9c9;
+  align-self: flex-start;
+  margin-top: 0.15em;
+}
+
+.loader.is-done { display: none; }
+
+@keyframes loader-out {
+  to { opacity: 0; filter: blur(12px); visibility: hidden; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loader { animation: none; display: none; }
+}
+
+html {
+  /* JS handles smooth/inertial scrolling; native smooth would fight it. */
+  background: var(--bg); /* base color sits behind the fixed shader canvas */
+}
+
+body {
+  margin: 0;
+  font-family: 'Cabinet Grotesk', 'Inter', Arial, sans-serif;
+  background: transparent; /* let the fixed shader canvas (z-index:-2) show */
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+img { max-width: 100%; }
+
+/* ---------- PAGE GRAIN ----------
+   Fixed noise overlay above the background, below all content.
+   Uses the SVG #grain filter on a neutral fill. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  /* Above all content (and the nav's backdrop-filter) so the grain isn't
+     captured and re-blurred by the fixed navbar. */
+  z-index: 2000;
+  pointer-events: none;
+  /* Same strong grain everywhere (was previously only on .hero::after), so the
+     whole page reads dark & even — no hard line where the hero ends. */
+  opacity: 0.3;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+/* ---------- HERO (full-screen, like reference) ---------- */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 28px clamp(24px, 5vw, 72px) 48px;
+  /* No isolation / no opaque background here, so the page-wide fixed shader
+     canvas (z-index:-2) shows through behind the hero content. */
+}
+
+/* Animated smoke/noise shader background — fixed behind the WHOLE page. */
+.hero-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -2;
+  display: block;
+  pointer-events: none;
+}
+
+
+.topbar {
+  /* Fixed nav bar pinned to the top. Content is constrained to the page
+     width so the brand lines up with the content margins; links sit right. */
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1200px;
+  padding: 32px 24px 16px;
+  background: transparent;
+}
+
+/* ---------- PROGRESSIVE BLUR (navbar) ----------
+   Five stacked layers, each blurrier than the last and masked to a band
+   that steps down the strip. Where bands overlap the blurs compound, so
+   the effective blur ramps smoothly from ~0 at the top to max at the
+   bottom — no hard edge, no double-image. */
+.nav-blur {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--nav-blur-height, 230px);
+  z-index: 999; /* just under the topbar (1000) so nav text stays crisp */
+  pointer-events: none;
+}
+
+.nav-blur__layer {
+  position: absolute;
+  inset: 0;
+  border-radius: 0;
+  pointer-events: none;
+}
+
+/* Framer-style stack: mask uses `to top`, so the strongest blur sits at
+   the BOTTOM of the strip (nearest the page) and fades out toward the top.
+   Each band is a 4-stop window (transparent → solid → solid → transparent)
+   climbing 12.5% per layer; blur doubles each step. */
+.nav-blur__layer:nth-child(1) {
+  backdrop-filter: blur(0.265625px);
+  -webkit-backdrop-filter: blur(0.265625px);
+  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0) 0%, #000 12.5%, #000 25%, rgba(0,0,0,0) 37.5%);
+  mask-image: linear-gradient(to top, rgba(0,0,0,0) 0%, #000 12.5%, #000 25%, rgba(0,0,0,0) 37.5%);
+}
+.nav-blur__layer:nth-child(2) {
+  backdrop-filter: blur(0.53125px);
+  -webkit-backdrop-filter: blur(0.53125px);
+  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0) 12.5%, #000 25%, #000 37.5%, rgba(0,0,0,0) 50%);
+  mask-image: linear-gradient(to top, rgba(0,0,0,0) 12.5%, #000 25%, #000 37.5%, rgba(0,0,0,0) 50%);
+}
+.nav-blur__layer:nth-child(3) {
+  backdrop-filter: blur(1.0625px);
+  -webkit-backdrop-filter: blur(1.0625px);
+  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0) 25%, #000 37.5%, #000 50%, rgba(0,0,0,0) 62.5%);
+  mask-image: linear-gradient(to top, rgba(0,0,0,0) 25%, #000 37.5%, #000 50%, rgba(0,0,0,0) 62.5%);
+}
+.nav-blur__layer:nth-child(4) {
+  backdrop-filter: blur(2.125px);
+  -webkit-backdrop-filter: blur(2.125px);
+  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0) 37.5%, #000 50%, #000 62.5%, rgba(0,0,0,0) 75%);
+  mask-image: linear-gradient(to top, rgba(0,0,0,0) 37.5%, #000 50%, #000 62.5%, rgba(0,0,0,0) 75%);
+}
+.nav-blur__layer:nth-child(5) {
+  backdrop-filter: blur(4.25px);
+  -webkit-backdrop-filter: blur(4.25px);
+  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0) 50%, #000 62.5%, #000 75%, rgba(0,0,0,0) 87.5%);
+  mask-image: linear-gradient(to top, rgba(0,0,0,0) 50%, #000 62.5%, #000 75%, rgba(0,0,0,0) 87.5%);
+}
+.nav-blur__layer:nth-child(6) {
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
+  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0) 62.5%, #000 75%, #000 87.5%, rgba(0,0,0,0) 100%);
+  mask-image: linear-gradient(to top, rgba(0,0,0,0) 62.5%, #000 75%, #000 87.5%, rgba(0,0,0,0) 100%);
+}
+.nav-blur__layer:nth-child(7) {
+  backdrop-filter: blur(17px);
+  -webkit-backdrop-filter: blur(17px);
+  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0) 75%, #000 87.5%, #000 100%);
+  mask-image: linear-gradient(to top, rgba(0,0,0,0) 75%, #000 87.5%, #000 100%);
+}
+.nav-blur__layer:nth-child(8) {
+  backdrop-filter: blur(34px);
+  -webkit-backdrop-filter: blur(34px);
+  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0) 87.5%, #000 100%);
+  mask-image: linear-gradient(to top, rgba(0,0,0,0) 87.5%, #000 100%);
+}
+
+
+.brand,
+.nav-links a,
+.footer-card a {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.brand {
+  font-size: 24px;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+.nav-links {
+  display: flex;
+  gap: 30px;
+}
+
+.nav-links a {
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 500;
+  opacity: 0.92;
+  transition: opacity 0.2s ease;
+}
+
+.nav-links a:hover { opacity: 0.6; }
+
+/* ---------- ROLL/SWAP LINK HOVER ----------
+   Each letter is a clipped column (one line-height tall) holding two stacked
+   copies; on hover the column rolls up so the second copy replaces the first.
+   --lh defines the single-line height used for clipping AND the roll distance,
+   so they always match (avoids the glyph getting cut to blank). */
+.roll-link {
+  --lh: 1.15em;
+  display: inline-flex;
+  white-space: pre; /* preserve spaces between letters */
+  line-height: var(--lh);
+}
+
+.roll-char {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  height: var(--lh);
+}
+
+.roll-inner {
+  display: block;
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--d, 0s);
+}
+
+.roll-face {
+  display: block;
+  height: var(--lh);
+  line-height: var(--lh);
+}
+
+.roll-link:hover .roll-inner {
+  transform: translateY(calc(-1 * var(--lh)));
+}
+
+.hero-body {
+  flex: 1;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 40px 0;
+}
+
+/* Scroll-driven exit for the hero content, driven by --p (0 = centered,
+   1 = scrolled away). The title and the intro move DIFFERENTLY so they
+   don't read as one block. */
+.hero-body,
+.hero-intro {
+  will-change: transform, filter, opacity;
+  transition: transform 0.15s linear, filter 0.15s linear, opacity 0.15s linear;
+}
+
+/* Title: scales UP and drifts upward as it leaves. */
+.hero-body {
+  transform-origin: center center;
+  transform: translateY(calc(-40px * var(--p, 0))) scale(calc(1 + 0.22 * var(--p, 0)));
+  filter: blur(calc(16px * var(--p, 0)));
+  opacity: calc(1 - 0.9 * var(--p, 0));
+}
+
+/* Intro: smaller scale, drifts DOWNWARD — opposite direction to the title. */
+.hero-intro {
+  transform-origin: center center;
+  transform: translateY(calc(50px * var(--p, 0))) scale(calc(1 - 0.06 * var(--p, 0)));
+  filter: blur(calc(10px * var(--p, 0)));
+  opacity: calc(1 - var(--p, 0));
+}
+
+/* Badge scroll exit: blur + fade applied to the inner spin layer, so the
+   wrapper's slide-in opacity/transform stays independent. */
+.badge--open__spin {
+  filter: blur(calc(12px * var(--p, 0)));
+  transition: filter 0.15s linear;
+}
+
+.hero-title {
+  font-size: 82px;
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+  font-weight: 700;
+  margin: 0;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.hero-intro {
+  /* Sits at the bottom of the hero, centered horizontally. */
+  margin: 0 auto;
+  font-size: 24px;
+  line-height: 1.45;
+  font-weight: 500;
+  color: #c9c9c9;
+  max-width: 52ch;
+  text-align: center;
+}
+
+.hero-intro .accent { color: var(--accent); }
+
+/* Rotating circular badges */
+.badge {
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  z-index: 1;
+  background: none;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  filter: none;
+}
+
+.badge svg {
+  width: 100%;
+  height: 100%;
+  background: none;
+  overflow: visible;
+}
+
+/* Path is only a guide for the textPath — never render a fill/stroke for it. */
+.badge path { fill: none; stroke: none; }
+
+.badge text {
+  fill: #c9c9c9;
+  font-family: 'Cabinet Grotesk', 'Inter', Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.badge--open text {
+  font-family: 'Barlow Condensed', 'Inter', Arial, sans-serif;
+  font-weight: 400;
+  font-size: 20px;
+}
+
+/* SCROLL badge follows the cursor across the WHOLE page (fixed overlay).
+   position:fixed + high z-index so its backdrop-filter blurs whatever section
+   is underneath it. Inner element keeps spinning so cursor-follow and rotation
+   don't fight. */
+.badge--scroll {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 120px;
+  height: 120px;
+  z-index: 9999;
+  pointer-events: none;
+  transition: transform 0.18s ease-out, opacity 0.2s ease;
+  /* sits at 72%/40% until JS takes over */
+  transform: translate(72vw, 40vh);
+}
+
+/* Frosted-glass disc — sits behind the spinning text, does NOT rotate. */
+.badge--scroll::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: none;
+  border: none;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  z-index: 0;
+  transition: backdrop-filter 0.25s ease, -webkit-backdrop-filter 0.25s ease;
+}
+
+/* Compact state: shrinks to a small blurred dot pinned to a link corner.
+   JS sets --cs (scale) and pins position; here we hide the text and soften. */
+.badge--scroll .badge-text-fade {
+  transition: opacity 0.2s ease;
+}
+
+.badge--scroll.is-compact .badge-text-fade {
+  opacity: 0; /* hide SCROLL text, leave just the blurred dot */
+}
+
+.badge--scroll.is-compact::before {
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+
+.badge--scroll .badge-spin {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  animation: spin 14s linear infinite;
+}
+
+.badge--open {
+  bottom: 8%;
+  left: clamp(24px, 5vw, 72px);
+  /* Slide-in from the left: starts off-screen + transparent, eases into
+     place when the hero enters view (toggled by .is-revealed). */
+  transform: translateX(-120px);
+  opacity: 0;
+  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.7s ease;
+}
+
+.badge--open.is-revealed {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+/* Inner element carries the continuous rotation, kept separate from the
+   wrapper's slide so the two transforms don't fight. */
+.badge--open__spin {
+  width: 100%;
+  height: 100%;
+  animation: spin 18s linear infinite reverse;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge--open__spin,
+  .badge--scroll .badge-spin { animation: none; }
+}
+
+/* ---------- CONTENT BELOW HERO ---------- */
+.page-shell {
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 80px 24px 80px;
+}
+
+.section-title {
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  letter-spacing: -0.03em;
+  font-weight: 700;
+  margin: 0 0 28px;
+  text-align: center;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 24px;
+}
+
+.side-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  backdrop-filter: blur(8px);
+}
+
+.side-card {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  grid-column: 1 / -1;
+}
+
+/* ---------- STACKED PROJECTS ----------
+   The wrapper is tall (set by JS = N × 100vh) and the stage inside is
+   sticky, so the projects stay on screen while you scroll through that
+   range. JS slides each project: incoming rises from below, outgoing is
+   pushed off to the left. */
+.projects-stack {
+  position: relative;
+}
+
+.projects-stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  /* No horizontal clipping: cards slide in from the right / out to the left
+     fully visible. body has overflow-x: hidden so no page scrollbar appears. */
+  overflow: visible;
+}
+
+/* Slides (title + project cards). Two are visible at once (slot 0 left,
+   slot 1 right). JS positions every slide via inline transform/opacity each
+   frame. Slot width + gutter come from these custom properties.
+   --pad keeps the pair off the viewport edges; slot width is derived from
+   the remaining space so the two never overlap. */
+.projects-stage {
+  --pad: clamp(24px, 5vw, 96px);
+  --gutter: clamp(48px, 7vw, 120px);
+  --slot-w: min(500px, (100vw - 2 * var(--pad) - var(--gutter)) / 2);
+}
+
+.projects-slide {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--slot-w);
+  will-change: transform, opacity;
+  /* Smooth the per-frame scroll updates: strong ease-out so cards move fast
+     then settle slowly (fast → slow). */
+  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.5s ease;
+}
+
+/* Project card layout (image on top, copy below). Content centered so the
+   image/copy (88% wide) sits evenly within the slot. */
+.projects-slide.project-spotlight {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  backdrop-filter: none;
+}
+
+/* The intro "My selected projects" slide. */
+.projects-slide--title {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  width: var(--slot-w);
+}
+
+.projects-eyebrow {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.78rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.projects-title {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: #c9c9c9;
+}
+
+.projects-subtitle {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #c9c9c9;
+  max-width: 34ch;
+}
+
+/* Final slide: a call-to-action that scrolls to the contact form. */
+.projects-slide--cta {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  width: var(--slot-w);
+}
+
+.projects-cta-eyebrow {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.78rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.projects-cta-title {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: #c9c9c9;
+}
+
+.projects-cta-sub {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #c9c9c9;
+  max-width: 34ch;
+}
+
+/* CTA button reuses the form's .contact-submit styles; just align it left
+   and add top spacing within the slide. */
+.projects-cta-btn {
+  align-self: flex-start;
+  margin-top: 10px;
+  text-decoration: none;
+}
+
+@media (max-width: 900px) {
+  .projects-stack { height: auto !important; }
+  .projects-stage {
+    height: auto;
+    overflow: visible;
+    position: static;
+  }
+  .projects-slide {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 100%;
+    margin: 0 auto 64px;
+    max-width: 480px;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+  .projects-slide--title { max-width: 480px; }
+}
+
+.eyebrow,
+.mini-label {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.73rem;
+  color: var(--blue-soft);
+  font-weight: 600;
+}
+
+.project-spotlight .project-visual {
+  width: 88%;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  display: block;
+}
+
+/* Custom cursor: hide the native pointer over the image so the
+   "See project" chip reads as the cursor itself. */
+.project-visual:hover { cursor: none; }
+
+.project-visual img {
+  width: 100%;
+  display: block;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+}
+
+/* The chip that follows the cursor inside the image: a frosted square
+   with blur. Positioned by JS (left/top), centered on the pointer. */
+.project-cursor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.6);
+  display: grid;
+  place-items: center;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  color: #c9c9c9;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.project-visual:hover .project-cursor {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.project-copy-wrap {
+  /* Match the image width so the button's right edge lines up with it. */
+  width: 88%;
+  padding: 0;
+  /* Title + tiny description on the left, button pushed to the right. */
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.project-meta {
+  display: grid;
+  gap: 4px;
+}
+
+.project-desc {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.4;
+  color: #c9c9c9;
+  max-width: 18ch;
+}
+
+.side-card h2 {
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  line-height: 1;
+  margin: 0;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+  color: #c9c9c9;
+}
+
+/* Tags read as a single inline string separated by · dots */
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  color: #c9c9c9;
+}
+
+.tags span {
+  text-transform: uppercase;
+}
+
+.tags span + span::before {
+  content: "·";
+  margin-right: 10px;
+  color: #c9c9c9;
+}
+
+.location {
+  color: #c9c9c9;
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+.project-copy,
+.about-card p,
+.panel p,
+.panel li,
+.footer-card p {
+  color: var(--muted);
+  line-height: 1.6;
+  font-size: 0.98rem;
+}
+
+/* Achievements body copy */
+.about-text .panel p {
+  font-size: 18px;
+}
+
+.project-spotlight .project-copy {
+  font-size: 1.12rem;
+  line-height: 1.5;
+  color: #c9c9c9;
+  margin: 0;
+}
+
+.project-spotlight .project-copy strong {
+  color: #c9c9c9;
+  font-weight: 700;
+}
+
+/* Underlined text link with a small circle marker — matches the
+   "VIEW PROJECT" treatment in the reference design. */
+.project-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+  white-space: nowrap;
+  text-decoration: none;
+  color: #c9c9c9;
+  cursor: pointer;
+}
+
+/* The marker: a c9c9c9 ring (stroke only) that grows on hover, pushing the
+   text to the right. The dot itself takes layout width, so the flex row
+   reflows and the text shifts. Fixed height keeps the row height steady. */
+.project-link__dot {
+  flex: 0 0 auto;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 8px;
+  height: 34px;
+  /* nudge up to match the text glyph center (text box has 6px bottom padding
+     for the underline, which lowers its optical center) */
+  margin-top: -3px;
+  transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.project-link__dot::before {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid #c9c9c9;
+  background: transparent;
+  transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+              height 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.project-link__arrow {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  color: var(--accent);
+  opacity: 0;
+  transform: scale(0.4);
+  transition: opacity 0.3s ease 0.08s,
+              transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.project-link:hover .project-link__dot {
+  width: 30px;
+}
+
+.project-link:hover .project-link__dot::before {
+  width: 30px;
+  height: 30px;
+}
+
+.project-link__text {
+  position: relative;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.95rem;
+  padding-bottom: 6px;
+}
+
+/* Underline as its own layer so it can retract to the right on hover. */
+.project-link__text::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--accent);
+  transform-origin: right center;
+  /* scaleY(0.5) renders a hair-thin ~0.5px line */
+  transform: scaleY(0.5);
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+
+.project-link:hover .project-link__arrow {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.project-link:hover .project-link__text::after {
+  transform: scaleX(0) scaleY(0.5);
+}
+
+/* About: image on the left, text on the right. No panel background —
+   sits flush on the page. Columns are top-aligned; since the text is
+   taller than the image, the image stays sticky while the text scrolls. */
+.about-card {
+  grid-column: 1 / -1;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 12vh 0;
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  align-items: start;
+  gap: clamp(24px, 4vw, 64px);
+  background: transparent;
+  /* Subtle divider above the About section. */
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 0;
+  backdrop-filter: none;
+}
+
+.about-text {
+  display: grid;
+  gap: 10px;
+}
+
+/* Word-cascade reveal: each word starts shifted down + transparent and
+   eases into place; JS staggers them via --i (word index). */
+.reveal-word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.5em);
+  transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: calc(var(--i, 0) * 0.025s);
+}
+
+.reveal-on .reveal-word {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.about-text p {
+  font-size: 24px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.about-text .eyebrow {
+  font-size: 0.8rem;
+  margin-bottom: 4px;
+}
+
+/* Image holds its place at the top of the viewport while the longer
+   text column scrolls past it. */
+.about-visual {
+  position: sticky;
+  top: 12vh;
+  overflow: hidden;
+}
+
+.about-visual img {
+  width: 100%;
+  display: block;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+}
+
+@media (max-width: 900px) {
+  .about-card {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 64px 0;
+  }
+  .about-visual {
+    position: static;
+    order: -1;
+  }
+  .about-text p { font-size: 1.1rem; }
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 56px;
+}
+
+/* When the info panels flow inside the About text column, give them
+   breathing room below the paragraphs. */
+.about-text .info-grid {
+  margin-top: 16px;
+}
+
+.panel {
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  backdrop-filter: none;
+}
+
+/* Achievements & Stack span the full width of the info column. */
+.panel--wide {
+  grid-column: 1 / -1;
+}
+
+.panel h3 {
+  margin: 0 0 16px;
+  font-size: 24px;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Line that fills the space to the right of each section title. */
+.panel h3::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.panel ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 28px;
+}
+
+.panel li {
+  display: grid;
+  gap: 4px;
+}
+
+.panel span,
+.panel small {
+  color: #c9c9c9;
+}
+
+.stack-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px 32px;
+}
+
+.stack-list div {
+  display: grid;
+  gap: 4px;
+}
+
+/* Footer: no panel background. The name reads huge, with the social
+   links stacked below it. */
+.footer-card {
+  max-width: 1200px;
+  margin: 48px auto 0;
+  padding: 48px 0 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 28px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  backdrop-filter: none;
+  /* Slide up from below — no fade, the footer stays solid as it moves in. */
+  transform: translateY(120px);
+  transition: transform 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.footer-card.is-visible {
+  transform: translateY(0);
+}
+
+/* Top row: huge name on the left, "Let's connect" CTA on the right. */
+.footer-top {
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.footer-name {
+  font-weight: 700;
+  margin: 0;
+  color: var(--text);
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+}
+
+@media (max-width: 760px) {
+  .footer-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+}
+
+/* ---------- CONTACT FORM ---------- */
+.contact-section {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 12vh 24px 8vh;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.contact-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(40px, 6vw, 96px);
+  align-items: start;
+}
+
+.contact-eyebrow {
+  margin: 0 0 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.8rem;
+  color: #c9c9c9;
+}
+
+.contact-title {
+  margin: 0;
+  font-size: clamp(2.2rem, 4.5vw, 3.6rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+  color: #c9c9c9;
+}
+
+.contact-form {
+  display: grid;
+  gap: 22px;
+}
+
+/* Fields + button slide in from the right, staggered, when the form is
+   revealed (.is-shown added by JS on scroll). */
+.contact-form .field,
+.contact-form .contact-action {
+  opacity: 0;
+  transform: translateX(40px);
+  transition: opacity 0.5s ease, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: calc(var(--i, 0) * 0.1s);
+}
+
+.contact-form.is-shown .field,
+.contact-form.is-shown .contact-action {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Floating label: starts as placeholder text inside the field, then slides
+   up to a small label on focus or once the field has content. */
+.field {
+  position: relative;
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 28px 2px 10px;
+  color: #fff;
+  font: inherit;
+  font-size: 1.05rem;
+  outline: none;
+  transition: border-color 0.25s ease;
+}
+
+/* Textarea auto-grows with its content (JS), so no manual resize handle and
+   no scrollbar to style. */
+.field textarea {
+  resize: none;
+  overflow: hidden;
+  min-height: calc(28px + 1.4em * 2 + 10px);
+  line-height: 1.4;
+}
+
+.field input:focus,
+.field textarea:focus {
+  border-bottom-color: #c9c9c9;
+}
+
+.field label {
+  position: absolute;
+  left: 2px;
+  top: 28px;
+  color: rgba(201, 201, 201, 0.5);
+  font-size: 1.05rem;
+  pointer-events: none;
+  transform-origin: left top;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+/* Raise + shrink the label when the field is focused or filled. */
+.field input:focus + label,
+.field textarea:focus + label,
+.field input:not(:placeholder-shown) + label,
+.field textarea:not(:placeholder-shown) + label {
+  transform: translateY(-26px) scale(0.78);
+  color: #c9c9c9;
+  letter-spacing: 0.06em;
+}
+
+.contact-submit {
+  flex: 0 0 auto;
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  overflow: hidden;            /* clip arrows sliding past the edges */
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  padding: 14px 26px;
+  color: #c9c9c9;
+  font: inherit;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Two clipped slots — one before the text, one after. The SVG slides
+   (transform/opacity) while the slot's own width opens/closes to push the
+   text. Both share one easing+duration so it reads as a single clean motion
+   (no per-frame reflow — it's a discrete hover transition). */
+.contact-submit__slot {
+  position: relative;
+  display: inline-block;
+  height: 1.05em;
+  flex: 0 0 auto;
+  overflow: hidden;
+  transition: width 0.4s cubic-bezier(0.5, 0, 0.2, 1),
+              margin 0.4s cubic-bezier(0.5, 0, 0.2, 1);
+}
+
+.contact-submit__slot svg {
+  position: absolute;
+  top: 0;
+  width: 1.05em;
+  height: 1.05em;
+  color: var(--accent);
+  transition: transform 0.4s cubic-bezier(0.5, 0, 0.2, 1),
+              opacity 0.25s ease;
+}
+
+/* Right slot: visible at rest (after the text). On hover it collapses and
+   its arrow slides out to the right. */
+.contact-submit__slot--right {
+  width: 1.05em;
+  margin-left: 10px;
+}
+.contact-submit__slot--right svg { right: 0; transform: translateX(0); opacity: 1; }
+.contact-submit:hover .contact-submit__slot--right {
+  width: 0;
+  margin-left: 0;
+}
+.contact-submit:hover .contact-submit__slot--right svg {
+  transform: translateX(140%); opacity: 0;
+}
+
+/* Left slot: collapsed at rest (no gap). On hover it opens — pushing the
+   text right — and its arrow slides in from the left. */
+.contact-submit__slot--left {
+  width: 0;
+  margin-right: 0;
+}
+.contact-submit__slot--left svg { left: 0; transform: translateX(-140%); opacity: 0; }
+.contact-submit:hover .contact-submit__slot--left {
+  width: 1.05em;
+  margin-right: 10px;
+}
+.contact-submit:hover .contact-submit__slot--left svg {
+  transform: translateX(0); opacity: 1;
+}
+
+.contact-submit:hover {
+  background: #c9c9c9;
+  color: #01040a;
+  border-color: #c9c9c9;
+}
+
+/* Resting (right) arrow is red; the incoming (left) hover arrow matches the
+   inverted text color. */
+.contact-submit__slot--right svg { color: var(--accent); }
+.contact-submit__slot--left svg { color: currentColor; }
+
+/* Button on the left, status message pushed to the right edge. */
+.contact-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.contact-status {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #c9c9c9;
+}
+
+.contact-status:empty { display: none; }
+
+.contact-status.is-error { color: #ff7a7a; }
+
+@media (max-width: 860px) {
+  .contact-inner { grid-template-columns: 1fr; gap: 40px; }
+}
+
+.footer-name__first,
+.footer-name__last {
+  display: block;
+  line-height: 1;
+}
+
+.footer-name__first { font-size: 65px; font-weight: 500; }
+.footer-name__last { font-size: 82px; }
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+}
+
+.footer-card a {
+  color: var(--muted);
+  font-size: 20px;
+  opacity: 0.92;
+  transition: opacity 0.2s ease;
+}
+
+.footer-card a:hover { opacity: 0.6; }
+
+@media (max-width: 1080px) {
+  .content-grid,
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .topbar { gap: 12px; }
+  .nav-links { gap: 16px; }
+  .badge { display: none; }
+  .hero-intro { max-width: 100%; }
+  .side-card { border-radius: 18px; }
+}

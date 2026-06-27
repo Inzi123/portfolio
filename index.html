@@ -1,113 +1,1244 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
-    <link rel="shortcut icon" href="/icons/favicon.png" type="image/x-icon">
-    <title>Lucas Inzirillo</title>
-</head>
-<body>
-    <nav class="navbar">
-        <div class="navbar__logo">
-           <img src="" alt="">
-        </div>
-        <ul class="navbar__links">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lucas Inzirillo — UX / UI Designer</title>
+    <meta
+      name="description"
+      content="Lucas Inzirillo — UX / UI Designer & Design Systems Specialist."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,700,800,900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- ===================== LOADING SCREEN =====================
+         Full-screen intro: the name starts heavily blurred and resolves
+         into focus, then the whole overlay fades away (~3s total). -->
+    <div class="loader" id="loader">
+      <div class="loader__counter" id="loaderCounter" aria-hidden="true">
+        <div class="loader__digit"><div class="loader__reel" data-place="hundreds"></div></div>
+        <div class="loader__digit"><div class="loader__reel" data-place="tens"></div></div>
+        <div class="loader__digit"><div class="loader__reel" data-place="ones"></div></div>
+        <span class="loader__pct">%</span>
+      </div>
+    </div>
 
-            <li class="navbar__link">
-                <a href="#main">Home</a>
+    <!-- Grain filter (referenced by .grain overlays via filter: url(#grain)).
+         feTurbulence paints the noise directly; feColorMatrix turns it
+         grayscale so it reads as film grain. -->
+    <svg width="0" height="0" aria-hidden="true" style="position:absolute">
+      <filter id="grain" color-interpolation-filters="sRGB"
+        x="0" y="0" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="4" stitchTiles="stitch" result="n" />
+        <feColorMatrix in="n" type="matrix"
+          values="0 0 0 0 0
+                  0 0 0 0 0
+                  0 0 0 0 0
+                  0 0 0 0.85 0" />
+      </filter>
+    </svg>
+
+    <!-- Animated smoke shader — fixed background behind the whole page -->
+    <canvas class="hero-canvas" aria-hidden="true"></canvas>
+
+    <!-- Rotating badge: SCROLL — follows the cursor across the whole page -->
+    <div class="badge badge--scroll" aria-hidden="true">
+      <div class="badge-spin badge-text-fade">
+        <svg viewBox="0 0 150 150">
+          <defs>
+            <path id="circleScroll" d="M75,75 m-50,0 a50,50 0 1,1 100,0 a50,50 0 1,1 -100,0" />
+          </defs>
+          <text>
+            <textPath href="#circleScroll">SCROLL • SCROLL • SCROLL • SCROLL •</textPath>
+          </text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- ===================== HERO (full screen) ===================== -->
+    <!-- Progressive blur strip behind the fixed navbar (Framer-style):
+         8 stacked layers, blur doubling each step, masked to overlapping
+         bands that climb the strip — smooth blur ramp, no hard edge. -->
+    <div class="nav-blur" aria-hidden="true">
+      <div class="nav-blur__layer"></div>
+      <div class="nav-blur__layer"></div>
+      <div class="nav-blur__layer"></div>
+      <div class="nav-blur__layer"></div>
+      <div class="nav-blur__layer"></div>
+      <div class="nav-blur__layer"></div>
+      <div class="nav-blur__layer"></div>
+      <div class="nav-blur__layer"></div>
+    </div>
+
+    <section id="home" class="hero">
+      <header class="topbar">
+        <a class="brand" href="#home">Lucas Inzirillo</a>
+        <nav class="nav-links">
+          <a href="#work">Work</a>
+          <a href="#about">About me</a>
+          <a href="#contact">Contact</a>
+        </nav>
+      </header>
+
+      <div class="hero-body">
+        <h1 class="hero-title">UX / UI Designer &amp;<br />Design Systems<br />Specialist</h1>
+      </div>
+
+      <p class="hero-intro">
+        Hey, I’m <span class="accent">Lucas</span> – I’ve been designing for
+        <span class="accent">+4 years.</span><br />
+        I love building clean and thoughtful interfaces
+      </p>
+
+      <!-- Rotating badge: OPEN TO WORK. Outer wrapper slides in; inner spins. -->
+      <div class="badge badge--open" aria-hidden="true">
+        <div class="badge--open__spin">
+          <svg viewBox="0 0 150 150">
+            <defs>
+              <path id="circleOpen" d="M75,75 m-58,0 a58,58 0 1,1 116,0 a58,58 0 1,1 -116,0" />
+            </defs>
+            <text>
+              <textPath href="#circleOpen">OPEN TO WORK • OPEN TO WORK • OPEN TO WORK •</textPath>
+            </text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== CONTENT ===================== -->
+    <main class="page-shell">
+      <!-- Featured work -->
+      <section id="work">
+        <!-- Stacked projects: two visible at a time. As you scroll, the
+             leftmost is pushed off-left, the others shift one slot left, and a
+             new one rises in from the bottom-right. The stage is sticky over a
+             tall wrapper (set by JS). -->
+        <div class="projects-stack" id="projectsStack">
+          <div class="projects-stage">
+            <div class="projects-slide projects-slide--title">
+              <h2 class="projects-title">My selected projects</h2>
+              <p class="projects-subtitle">A few products I’ve designed and shipped, from design systems to full interfaces. Scroll to explore.</p>
+            </div>
+
+            <aside class="projects-slide side-card project-spotlight">
+              <a class="project-visual" href="https://altruistic-habits-426334.framer.app/secondpulse" aria-label="See SecondPulse project">
+                <img src="https://framerusercontent.com/images/COInmXaJan2gf6XaY9ogYQnfQ0I.png?width=1440&amp;height=854" alt="SecondPulse interface preview" />
+                <span class="project-cursor" aria-hidden="true">See project</span>
+              </a>
+              <div class="project-copy-wrap">
+                <div class="project-meta">
+                  <h2>SecondPulse</h2>
+                  <p class="project-desc">Intelligent workspace platform &amp; design system.</p>
+                </div>
+                <a class="project-link" href="https://altruistic-habits-426334.framer.app/secondpulse">
+                  <span class="project-link__dot" aria-hidden="true">
+                    <svg class="project-link__arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                  </span>
+                  <span class="project-link__text">VIEW PROJECT</span>
+                </a>
+              </div>
+            </aside>
+
+            <aside class="projects-slide side-card project-spotlight">
+              <a class="project-visual" href="https://altruistic-habits-426334.framer.app/secondpulse" aria-label="See SecondPulse project">
+                <img src="https://framerusercontent.com/images/COInmXaJan2gf6XaY9ogYQnfQ0I.png?width=1440&amp;height=854" alt="SecondPulse interface preview" />
+                <span class="project-cursor" aria-hidden="true">See project</span>
+              </a>
+              <div class="project-copy-wrap">
+                <div class="project-meta">
+                  <h2>SecondPulse</h2>
+                  <p class="project-desc">Intelligent workspace platform &amp; design system.</p>
+                </div>
+                <a class="project-link" href="https://altruistic-habits-426334.framer.app/secondpulse">
+                  <span class="project-link__dot" aria-hidden="true">
+                    <svg class="project-link__arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                  </span>
+                  <span class="project-link__text">VIEW PROJECT</span>
+                </a>
+              </div>
+            </aside>
+
+            <aside class="projects-slide side-card project-spotlight">
+              <a class="project-visual" href="https://altruistic-habits-426334.framer.app/secondpulse" aria-label="See SecondPulse project">
+                <img src="https://framerusercontent.com/images/COInmXaJan2gf6XaY9ogYQnfQ0I.png?width=1440&amp;height=854" alt="SecondPulse interface preview" />
+                <span class="project-cursor" aria-hidden="true">See project</span>
+              </a>
+              <div class="project-copy-wrap">
+                <div class="project-meta">
+                  <h2>SecondPulse</h2>
+                  <p class="project-desc">Intelligent workspace platform &amp; design system.</p>
+                </div>
+                <a class="project-link" href="https://altruistic-habits-426334.framer.app/secondpulse">
+                  <span class="project-link__dot" aria-hidden="true">
+                    <svg class="project-link__arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                  </span>
+                  <span class="project-link__text">VIEW PROJECT</span>
+                </a>
+              </div>
+            </aside>
+
+            <aside class="projects-slide side-card project-spotlight">
+              <a class="project-visual" href="https://altruistic-habits-426334.framer.app/secondpulse" aria-label="See SecondPulse project">
+                <img src="https://framerusercontent.com/images/COInmXaJan2gf6XaY9ogYQnfQ0I.png?width=1440&amp;height=854" alt="SecondPulse interface preview" />
+                <span class="project-cursor" aria-hidden="true">See project</span>
+              </a>
+              <div class="project-copy-wrap">
+                <div class="project-meta">
+                  <h2>SecondPulse</h2>
+                  <p class="project-desc">Intelligent workspace platform &amp; design system.</p>
+                </div>
+                <a class="project-link" href="https://altruistic-habits-426334.framer.app/secondpulse">
+                  <span class="project-link__dot" aria-hidden="true">
+                    <svg class="project-link__arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                  </span>
+                  <span class="project-link__text">VIEW PROJECT</span>
+                </a>
+              </div>
+            </aside>
+
+            <div class="projects-slide projects-slide--cta">
+              <h2 class="projects-cta-title">Have a project in mind?</h2>
+              <p class="projects-cta-sub">Let’s talk about how we can build it together.</p>
+              <a class="contact-submit projects-cta-btn" href="#contact">
+                <span class="contact-submit__slot contact-submit__slot--left" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                </span>
+                <span class="contact-submit__text">Get in touch</span>
+                <span class="contact-submit__slot contact-submit__slot--right" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                </span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="content-grid">
+          <!-- About -->
+          <section id="about" class="about-card">
+            <div class="about-visual">
+              <img
+                src="https://framerusercontent.com/images/COInmXaJan2gf6XaY9ogYQnfQ0I.png?width=1440&amp;height=854"
+                alt="Lucas Inzirillo"
+              />
+            </div>
+            <div class="about-text">
+              <p>
+                I’m an Argentinian–Italian UX/UI Designer with over three years of
+                experience, focused on building scalable design systems and intuitive
+                interfaces for digital products. I’m currently based in Argentina,
+                collaborating remotely with teams around the world.
+              </p>
+              <p>
+                My path into design actually began with front-end development. At first,
+                I was fascinated by code, but I found myself spending more and more
+                time refining how things looked and felt to use. That curiosity grew
+                into a passion for interface design and, eventually, for creating
+                complete design systems.
+              </p>
+              <p>
+                Living and working in different countries — including Germany — gave
+                me a deeper appreciation for how culture shapes design. I speak
+                English, Spanish, and German, and I’m always looking for new
+                challenges that connect creativity, technology, and purpose.
+              </p>
+
+              <!-- Info grid: flows below the About text, scrolling past the
+                   sticky image. -->
+              <section class="info-grid">
+        <article class="panel">
+          <h3>Education</h3>
+          <ul>
+            <li>
+              <strong>Degree in DIGITAL GRAPHIC DESIGN</strong>
+              <span>2024 — 2026 (expected)</span>
+              <small>Instituto Nuevos Aires</small>
             </li>
             <li>
-                <a href="#about">About</a>
+              <strong>UX/UI Advanced Course</strong>
+              <span>February 2023 — August 2023</span>
+              <small>Coderhouse</small>
             </li>
             <li>
-                <a href="#work">Work</a>
+              <strong>Front-End Dev Course</strong>
+              <span>March 2021 — May 2021</span>
+              <small>Plataforma 5</small>
             </li>
-            <li class="navbar__btnactive">
-                <a href="#form">Contact</a>
-                <img src="/icons/arrowDown.png" alt="">
+          </ul>
+        </article>
+
+        <article class="panel">
+          <h3>Experience</h3>
+          <ul>
+            <li>
+              <strong>UX / UI Designer (remote)</strong>
+              <span>October 2025 — Present</span>
+              <small>Miinta · Barcelona (Remote)</small>
             </li>
-        </ul>
-        <div class="navbar__burger">
-            <div class="line1"></div>
-            <div class="line2"></div>
-            <div class="line3"></div>
-        </div>
-    </nav>
+            <li>
+              <strong>UX / UI Designer (remote)</strong>
+              <span>October 2024 — Present</span>
+              <small>SecondPulse · Frankfurt a.M (Remote)</small>
+            </li>
+            <li>
+              <strong>UX / UI Designer freelancer</strong>
+              <span>October 2021 — Present</span>
+              <small>Upwork · Remote</small>
+            </li>
+          </ul>
+        </article>
 
-    <section class="main" id="main">
-        <div class="main__container">
-            <p class="main__text parallaxit">Hello, I am</p>
-            <h2 class="main__text parallaxit">Lucas Inzirillo
-                <br>
-           <span>Front-End Developer</span> 
-            </h2 class="main__text parallaxit">
-            <h1 class="main__text parallaxit">I am a Front-end developer and designer focused on empowering small businesses and startups. I am passionate about dynamic designs, UI effects and animations.</h1>
+        <article class="panel panel--wide">
+          <h3>Achievements</h3>
+          <p>
+            Winner of scholarship “Joven Embajador Mendocino”. The scholarship
+            from AFS gave me the opportunity to live one year in Nuremberg,
+            Germany, and strengthened my languages, independence, and
+            intercultural skills.
+          </p>
+        </article>
+
+        <article class="panel panel--wide">
+          <h3>Stack</h3>
+          <div class="stack-list">
+            <div><strong>Figma</strong><span>Interface design tool</span></div>
+            <div><strong>Framer</strong><span>No code design tool</span></div>
+            <div><strong>Jira</strong><span>Productivity tool</span></div>
+            <div><strong>Notion</strong><span>Productivity tool</span></div>
+            <div><strong>Slack</strong><span>Productivity tool</span></div>
+            <div><strong>Front-end</strong><span>HTML, CSS, SCSS</span></div>
+          </div>
+        </article>
+              </section>
+            </div>
+          </section>
         </div>
+      </section>
+    </main>
+
+    <!-- ===================== CONTACT FORM ===================== -->
+    <section id="contact" class="contact-section">
+      <div class="contact-inner">
+        <div class="contact-intro">
+          <p class="contact-eyebrow">Get in touch</p>
+          <h2 class="contact-title">Let’s build<br />something together</h2>
+        </div>
+        <form class="contact-form" id="contactForm" novalidate>
+          <!-- Web3Forms: replace the value with your access key from web3forms.com -->
+          <input type="hidden" name="access_key" value="94e4bc2a-1bdd-4ee8-801b-74c43b0e9096" />
+          <input type="hidden" name="subject" value="New portfolio contact" />
+          <input type="hidden" name="from_name" value="Portfolio website" />
+          <!-- honeypot: bots fill this, humans don't -->
+          <input type="checkbox" name="botcheck" style="display:none" tabindex="-1" autocomplete="off" />
+          <div class="field">
+            <input type="text" id="cf-name" name="name" placeholder=" " required />
+            <label for="cf-name">Name</label>
+          </div>
+          <div class="field">
+            <input type="email" id="cf-email" name="email" placeholder=" " required />
+            <label for="cf-email">Email</label>
+          </div>
+          <div class="field">
+            <textarea id="cf-message" name="message" rows="4" placeholder=" " required></textarea>
+            <label for="cf-message">Message</label>
+          </div>
+          <div class="contact-action">
+            <button type="submit" class="contact-submit">
+              <span class="contact-submit__slot contact-submit__slot--left" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              </span>
+              <span class="contact-submit__text">Send message</span>
+              <span class="contact-submit__slot contact-submit__slot--right" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              </span>
+            </button>
+            <p class="contact-status" id="contactStatus" role="status" aria-live="polite"></p>
+          </div>
+        </form>
+      </div>
     </section>
 
-    <section class="about" id="about">
-        <div class="about__container">
-                <div class="about__container-titles anim-left">
-                    <h2>About me</h2>
-                    <p>Hello! My name is Lucas and I love designing and programming. What started as a simple youtube HTML course became my passion and my full time job.</p>
-                    <p>I am an Argentinian/Italian freelancer based in Frankfurt am Main, Germany who speaks Spanish, English and German</p>
-                    <p>Currently working on my own startup and looking for ambitious projects with a lot of desire to grow.</p>
-                    <p>Here are the technologies I know:</p>
-                    <ul>
-                        <li><img src="/icons/arrowRight.png" alt="">HTML</li>
-                        <li><img src="/icons/arrowRight.png" alt="">CSS</li>
-                        <li><img src="/icons/arrowRight.png" alt="">JS</li>
-                        <li><img src="/icons/arrowRight.png" alt="">SASS</li>
-                        <li><img src="/icons/arrowRight.png" alt="">jQuery</li>
-                        <li><img src="/icons/arrowRight.png" alt="">Bootstrap</li>
-                        <li><img src="/icons/arrowRight.png" alt="">Git</li>
-                        <li><img src="/icons/arrowRight.png" alt="">BEM</li>
-                    </ul>
-            </div>
-            <div class="about__container-img anim-right">
-                <img src="/images/emoji.png" alt="">
-            </div>
-        </div>
-    </section>
-    <section class="work" id="work">
-        <h2 class="anim-top">Projects</h2>
-        <div class="work__container">
-            <div class="work__container-cardleft anim-bottom">
-                <p>VIEW <br> PROJECT</p>
-                <a href="https://medihub.net/" target="_blank"></a>
-                <h4>Development and Partially designed <span>HTML</span> <span>CSS</span> <span>JS</span></h4>
-            </div>
-            <div class="work__container-cardright anim-top">
-                <p>VIEW <br> PROJECT</p>
-                <a href="https://beaupair1.netlify.app/" target="_blank"></a>
-                <h4>Development and Design <span>HTML</span> <span>CSS</span> <span>JS</span></h4>
-            </div>
-        </div>
-    </section>
-
-
-    
-
-    <ul class="sideRedes">
-        <li><a href="https://www.linkedin.com/in/lucas-inzirillo-shopify-developer/" target="_blank" ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Pro 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2022 Fonticons, Inc. --><path d="M100.28 448H7.4V148.9h92.88zM53.79 108.1C24.09 108.1 0 83.5 0 53.8a53.79 53.79 0 0 1 107.58 0c0 29.7-24.1 54.3-53.79 54.3zM447.9 448h-92.68V302.4c0-34.7-.7-79.2-48.29-79.2-48.29 0-55.69 37.7-55.69 76.7V448h-92.78V148.9h89.08v40.8h1.3c12.4-23.5 42.69-48.3 87.88-48.3 94 0 111.28 61.9 111.28 142.3V448z"/></svg></a></li>
-        <li><a href="https://www.instagram.com/lucasinzirillo/" target="_blank" ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Pro 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2022 Fonticons, Inc. --><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z"/></svg></a></li>
-        <li><a href="https://github.com/Inzi123" target="_blank" ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Pro 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></a></li>
-        <li><a href="https://wa.me/4915730063025?text=Hi!%20I%20come%20from%20your%20portfolio" target="_blank" ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Pro 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2022 Fonticons, Inc. --><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/></svg></a></li>
-    </ul>
-
-    <footer class="footer">
-        <ul class="footer__redes">
-            <li><a href="https://www.linkedin.com/in/lucas-inzirillo-shopify-developer/" target="_blank" ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Pro 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2022 Fonticons, Inc. --><path d="M100.28 448H7.4V148.9h92.88zM53.79 108.1C24.09 108.1 0 83.5 0 53.8a53.79 53.79 0 0 1 107.58 0c0 29.7-24.1 54.3-53.79 54.3zM447.9 448h-92.68V302.4c0-34.7-.7-79.2-48.29-79.2-48.29 0-55.69 37.7-55.69 76.7V448h-92.78V148.9h89.08v40.8h1.3c12.4-23.5 42.69-48.3 87.88-48.3 94 0 111.28 61.9 111.28 142.3V448z"/></svg></a></li>
-            <li><a href="https://www.instagram.com/lucasinzirillo/" target="_blank" ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Pro 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2022 Fonticons, Inc. --><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z"/></svg></a></li>
-            <li><a href="https://github.com/Inzi123" target="_blank" ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Pro 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></a></li>
-            <li><a href="https://wa.me/4915730063025?text=Hi!%20I%20come%20from%20your%20portfolio" target="_blank" ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Pro 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2022 Fonticons, Inc. --><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/></svg></a></li>
-        </ul>
+    <footer class="footer-card">
+      <div class="footer-top">
+        <p class="footer-name"><span class="footer-name__first">Lucas</span> <span class="footer-name__last">Inzirillo</span></p>
+      </div>
+      <div class="footer-links">
+        <a href="https://www.linkedin.com/in/lucas-inzirillo-ux-ui-designer/">Linkedin</a>
+        <a href="https://www.behance.net/inzi123">Behance</a>
+        <a href="mailto:inzirillolucas01@gmail.com">inzirillolucas01@gmail.com</a>
+      </div>
     </footer>
-    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
-    <script src="/app.js"></script>
-    <script src="/vanilla-tilt.js"></script>
 
-</body>
+    <!-- Animated smoke/noise shader background -->
+    <script>
+      (function () {
+        var config = {
+          color1: { r: 41, g: 112, b: 255 },
+          color2: { r: 17, g: 30, b: 54 },
+          color3: { r: 0, g: 0, b: 0 },
+          scale: 1.1,
+          type: 'smoke',
+          noise: 0.3,
+          speed: 0.35
+        };
+
+        var canvas = document.querySelector('.hero-canvas');
+        if (!canvas) return;
+        var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        if (!gl) { canvas.style.display = 'none'; return; } // CSS fallback shows
+
+        var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        var vsSource =
+          'attribute vec2 a_pos;' +
+          'void main(){ gl_Position = vec4(a_pos, 0.0, 1.0); }';
+
+        var fsSource = [
+          'precision highp float;',
+          'uniform vec2 u_res;',
+          'uniform float u_time;',
+          'uniform float u_scale;',
+          'uniform float u_noise;',
+          'uniform vec2 u_mouse;', // normalized cursor (aspect-corrected uv space)
+          'uniform vec3 u_c1;',
+          'uniform vec3 u_c2;',
+          'uniform vec3 u_c3;',
+          // hash + value noise
+          'float hash(vec2 p){ p = fract(p*vec2(123.34, 456.21)); p += dot(p, p+45.32); return fract(p.x*p.y); }',
+          'float noise(vec2 p){',
+          '  vec2 i = floor(p); vec2 f = fract(p);',
+          '  float a = hash(i);',
+          '  float b = hash(i+vec2(1.0,0.0));',
+          '  float c = hash(i+vec2(0.0,1.0));',
+          '  float d = hash(i+vec2(1.0,1.0));',
+          '  vec2 u = f*f*(3.0-2.0*f);',
+          '  return mix(a,b,u.x) + (c-a)*u.y*(1.0-u.x) + (d-b)*u.x*u.y;',
+          '}',
+          // fractal brownian motion -> smoke
+          'float fbm(vec2 p){',
+          '  float v = 0.0; float amp = 0.5;',
+          '  for(int i=0;i<3;i++){ v += amp*noise(p); p *= 2.0; amp *= 0.5; }',
+          '  return v;',
+          '}',
+          'void main(){',
+          '  vec2 uv = gl_FragCoord.xy / u_res.xy;',
+          '  uv.x *= u_res.x / u_res.y;',
+          '  vec2 p = uv * u_scale;',
+          '  float t = u_time;',
+          // Cursor interaction: a soft, wide falloff around the pointer nudges
+          // the whole smoke field gently in one direction — like the cursor
+          // pushing the smoke aside, not a spiral.
+          '  vec2 md = uv - u_mouse;',
+          '  float infl = exp(-dot(md, md) * 2.0);',  // wide, soft falloff
+          '  p += md * infl * 0.18;',                  // gentle directional drift
+          // domain warping that evolves in place (no directional drift):
+          // animate the warp phase with sin/cos so the smoke swirls/breathes.
+          '  vec2 q = vec2(fbm(p + 0.4*vec2(cos(t*0.6), sin(t*0.5))), fbm(p + vec2(5.2, 1.3) + 0.4*vec2(sin(t*0.45), cos(t*0.55))));',
+          '  vec2 r = vec2(fbm(p + 4.0*q + 0.3*vec2(cos(t*0.4+1.0), sin(t*0.35))), fbm(p + 4.0*q + vec2(8.3, 2.8) + 0.3*vec2(sin(t*0.3), cos(t*0.42))));',
+          '  float f = fbm(p + 4.0*r);',
+          '  f = mix(f, f + u_noise*hash(gl_FragCoord.xy + t), u_noise);',
+          // blend three colors by the smoke field — keep it dark:
+          // base sits between black and deep navy, eletric blue only peeks through.
+          '  vec3 col = mix(u_c2, u_c3, clamp(f*1.4, 0.0, 1.0));',
+          '  col = mix(col, u_c1, clamp(pow(r.x, 1.8)*0.9, 0.0, 1.0));',
+          '  gl_FragColor = vec4(col, 1.0);',
+          '}'
+        ].join('\n');
+
+        function compile(type, src) {
+          var s = gl.createShader(type);
+          gl.shaderSource(s, src);
+          gl.compileShader(s);
+          if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+            console.error(gl.getShaderInfoLog(s));
+            return null;
+          }
+          return s;
+        }
+
+        var vs = compile(gl.VERTEX_SHADER, vsSource);
+        var fs = compile(gl.FRAGMENT_SHADER, fsSource);
+        if (!vs || !fs) { canvas.style.display = 'none'; return; }
+
+        var prog = gl.createProgram();
+        gl.attachShader(prog, vs);
+        gl.attachShader(prog, fs);
+        gl.linkProgram(prog);
+        gl.useProgram(prog);
+
+        var buf = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
+        var loc = gl.getAttribLocation(prog, 'a_pos');
+        gl.enableVertexAttribArray(loc);
+        gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+        var uRes = gl.getUniformLocation(prog, 'u_res');
+        var uTime = gl.getUniformLocation(prog, 'u_time');
+        var uScale = gl.getUniformLocation(prog, 'u_scale');
+        var uNoise = gl.getUniformLocation(prog, 'u_noise');
+        var uMouse = gl.getUniformLocation(prog, 'u_mouse');
+        var uC1 = gl.getUniformLocation(prog, 'u_c1');
+        var uC2 = gl.getUniformLocation(prog, 'u_c2');
+        var uC3 = gl.getUniformLocation(prog, 'u_c3');
+
+        gl.uniform1f(uScale, config.scale);
+        gl.uniform1f(uNoise, config.noise);
+        gl.uniform3f(uC1, config.color1.r/255, config.color1.g/255, config.color1.b/255);
+        gl.uniform3f(uC2, config.color2.r/255, config.color2.g/255, config.color2.b/255);
+        gl.uniform3f(uC3, config.color3.r/255, config.color3.g/255, config.color3.b/255);
+
+        function resize() {
+          var dpr = Math.min(window.devicePixelRatio || 1, 2);
+          var w = canvas.clientWidth, h = canvas.clientHeight;
+          canvas.width = Math.floor(w * dpr);
+          canvas.height = Math.floor(h * dpr);
+          gl.viewport(0, 0, canvas.width, canvas.height);
+          gl.uniform2f(uRes, canvas.width, canvas.height);
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // --- Cursor tracking (aspect-corrected uv space, smoothed) ---
+        var aspect = 1;
+        function updateAspect() { aspect = canvas.width / canvas.height; }
+        updateAspect();
+        var origResize = resize;
+        // wrap resize so aspect stays current
+        resize = function () { origResize(); updateAspect(); };
+        window.removeEventListener('resize', origResize);
+        window.addEventListener('resize', resize);
+
+        // target + smoothed mouse, start centered
+        var mx = 0.5 * aspect, my = 0.5;
+        var smx = mx, smy = my;
+        window.addEventListener('mousemove', function (e) {
+          var rect = canvas.getBoundingClientRect();
+          var nx = (e.clientX - rect.left) / rect.width;
+          var ny = 1.0 - (e.clientY - rect.top) / rect.height; // flip: gl y is up
+          mx = nx * aspect;
+          my = ny;
+        }, { passive: true });
+
+        // Time is driven by performance.now(); no Date usage.
+        var start = (typeof performance !== 'undefined' && performance.now) ? performance.now() : 0;
+
+        function frame(now) {
+          var elapsed = (now - start) / 1000;
+          // ease the smoothed cursor toward the target so it trails gently
+          smx += (mx - smx) * 0.025;
+          smy += (my - smy) * 0.025;
+          gl.uniform2f(uMouse, smx, smy);
+          gl.uniform1f(uTime, elapsed * config.speed);
+          gl.drawArrays(gl.TRIANGLES, 0, 6);
+          if (!reduceMotion) requestAnimationFrame(frame);
+        }
+
+        if (reduceMotion) {
+          // Draw a single static frame, cursor centered.
+          gl.uniform2f(uMouse, smx, smy);
+          gl.uniform1f(uTime, 0.0);
+          gl.drawArrays(gl.TRIANGLES, 0, 6);
+        } else {
+          requestAnimationFrame(frame);
+        }
+      })();
+    </script>
+
+    <script>
+      (function () {
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var badge = document.querySelector('.badge--scroll');
+        if (!badge) return;
+
+        var bw = badge.offsetWidth || 120;
+        var bh = badge.offsetHeight || 120;
+
+        // Scale applied in compact (link-hover) mode — small blurred dot.
+        var COMPACT_SCALE = 0.16;
+
+        // Viewport coordinates — badge is position:fixed, so it follows the
+        // cursor anywhere on the page and its backdrop-filter blurs whatever
+        // section is underneath it.
+        var tx = window.innerWidth * 0.72, ty = window.innerHeight * 0.40;
+        var cx = tx, cy = ty;
+        var scale = 1;            // current (smoothed) scale
+        var targetScale = 1;      // 1 = follow cursor, COMPACT_SCALE = pinned dot
+        var pinned = false;       // true while hovering a nav link
+        var pinX = 0, pinY = 0;   // pinned target center (link corner)
+        var raf = null;
+
+        function recalc() {
+          bw = badge.offsetWidth || bw;
+          bh = badge.offsetHeight || bh;
+        }
+        window.addEventListener('resize', recalc);
+
+        function render() {
+          // Horizontally centered on the cursor. When following the cursor the
+          // badge hangs BELOW it (top edge just under the pointer); when pinned
+          // to a link it stays centered on the pin point.
+          var topY = pinned ? (cy - bh / 2) : (cy + 8);
+          badge.style.transform =
+            'translate(' + (cx - bw / 2) + 'px,' + topY + 'px) scale(' + scale + ')';
+        }
+
+        function onMove(e) {
+          if (pinned) return; // ignore cursor while docked to a link
+          tx = e.clientX;
+          ty = e.clientY;
+          if (!raf) raf = requestAnimationFrame(tick);
+        }
+
+        function tick() {
+          // Choose the active target (cursor or pinned link corner).
+          var gx = pinned ? pinX : tx;
+          var gy = pinned ? pinY : ty;
+
+          cx += (gx - cx) * 0.16;
+          cy += (gy - cy) * 0.16;
+          scale += (targetScale - scale) * 0.18;
+          render();
+
+          var moving =
+            Math.abs(gx - cx) > 0.4 ||
+            Math.abs(gy - cy) > 0.4 ||
+            Math.abs(targetScale - scale) > 0.005;
+
+          if (moving) {
+            raf = requestAnimationFrame(tick);
+          } else {
+            raf = null;
+          }
+        }
+
+        function startAnim() { if (!raf) raf = requestAnimationFrame(tick); }
+
+        // --- Nav link hover: dock to the top-right corner of the link ---
+        // Includes the project VIEW PROJECT link and the footer links so they
+        // behave like the navbar links on hover.
+        var links = document.querySelectorAll('.nav-links a, .project-link, .footer-links a');
+        links.forEach(function (link) {
+          link.addEventListener('mouseenter', function () {
+            var r = link.getBoundingClientRect();
+            // Top-right corner of the link, nudged slightly outward/up.
+            pinX = r.right + 6;
+            pinY = r.top - 4;
+            pinned = true;
+            targetScale = COMPACT_SCALE;
+            badge.classList.add('is-compact');
+            startAnim();
+          });
+          link.addEventListener('mouseleave', function () {
+            pinned = false;
+            targetScale = 1;
+            badge.classList.remove('is-compact');
+            startAnim();
+          });
+        });
+
+        // Place it at the starting spot immediately.
+        render();
+
+        if (!reduce) {
+          window.addEventListener('mousemove', onMove, { passive: true });
+        }
+      })();
+    </script>
+
+    <!-- "See project" chip follows the cursor inside the project image -->
+    <script>
+      (function () {
+        // Hide the SCROLL badge while over any image so only the
+        // "See project" chip shows.
+        var scrollBadge = document.querySelector('.badge--scroll');
+
+        // Wire up every project image independently, each with its own
+        // chip and smoothed cursor-trailing state.
+        document.querySelectorAll('.project-visual').forEach(function (wrap) {
+          var chip = wrap.querySelector('.project-cursor');
+          if (!chip) return;
+
+          var tx = 0, ty = 0;   // target (pointer) position
+          var cx = 0, cy = 0;   // current (smoothed) position
+          var inside = false;
+          var raf = null;
+
+          function tick() {
+            cx += (tx - cx) * 0.18;
+            cy += (ty - cy) * 0.18;
+            chip.style.left = cx + 'px';
+            chip.style.top = cy + 'px';
+            if (inside && (Math.abs(tx - cx) > 0.3 || Math.abs(ty - cy) > 0.3)) {
+              raf = requestAnimationFrame(tick);
+            } else {
+              raf = null;
+            }
+          }
+
+          wrap.addEventListener('mousemove', function (e) {
+            var r = wrap.getBoundingClientRect();
+            tx = e.clientX - r.left;
+            ty = e.clientY - r.top;
+            if (!raf) raf = requestAnimationFrame(tick);
+          });
+
+          wrap.addEventListener('mouseenter', function (e) {
+            var r = wrap.getBoundingClientRect();
+            // Start the chip at the pointer so it doesn't slide in from a corner.
+            tx = cx = e.clientX - r.left;
+            ty = cy = e.clientY - r.top;
+            chip.style.left = cx + 'px';
+            chip.style.top = cy + 'px';
+            inside = true;
+            if (scrollBadge) scrollBadge.style.opacity = '0';
+          });
+          wrap.addEventListener('mouseleave', function () {
+            inside = false;
+            if (scrollBadge) scrollBadge.style.opacity = '';
+          });
+        });
+      })();
+    </script>
+
+    <!-- Hero scroll-out: scales up, blurs and fades as it leaves the top. -->
+    <script>
+      (function () {
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var hero = document.querySelector('.hero');
+        if (!hero || reduce) return;
+
+        var ticking = false;
+        function update() {
+          ticking = false;
+          var vh = window.innerHeight;
+          var r = hero.getBoundingClientRect();
+          var center = vh / 2;
+          var elCenter = r.top + r.height / 2;
+          var dist = Math.abs(elCenter - center);
+          var dead = vh * 0.25;
+          var range = vh * 0.8;
+          var p = (dist - dead) / (range - dead);
+          p = Math.max(0, Math.min(1, p));
+          p = p * p;
+          hero.style.setProperty('--p', p.toFixed(3));
+        }
+        function onScroll() {
+          if (!ticking) { ticking = true; requestAnimationFrame(update); }
+        }
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onScroll, { passive: true });
+        update();
+      })();
+    </script>
+
+    <!-- Stacked projects: as you scroll the wrapper, each project rises from
+         below into center, then is pushed off to the left by the next one. -->
+    <script>
+      (function () {
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var stack = document.getElementById('projectsStack');
+        if (!stack || reduce) return;
+
+        var projects = Array.prototype.slice.call(
+          stack.querySelectorAll('.projects-slide')
+        );
+        var n = projects.length;
+        if (!n) return;
+
+        // Two cards are visible at once; the track advances one card per
+        // viewport of scroll. With n cards there are (n-1) transitions.
+        var stage = stack.querySelector('.projects-stage');
+        function setHeight() {
+          // vh of scroll per transition — higher = each project lingers longer
+          // so there's time to read before it slides away.
+          var perStep = 180;
+          // HOLD = extra vh after the last slide lands, so the final CTA stays
+          // on screen for a beat before the section scrolls away.
+          var hold = 120;
+          stack.style.height = ((n - 1) * perStep + 100 + hold) + 'vh';
+        }
+        setHeight();
+        window.addEventListener('resize', setHeight);
+
+        var ticking = false;
+        function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+        // Linear here — the CSS transition on .projects-slide provides the
+        // fast→slow ease-out, so JS just maps scroll position directly.
+        function easeInOut(x) { return x; }
+
+        function update() {
+          ticking = false;
+          var vh = window.innerHeight;
+          var rect = stack.getBoundingClientRect();
+          var total = rect.height - vh;
+          var scrolled = clamp(-rect.top, 0, total);
+          var prog = total > 0 ? scrolled / total : 0;
+          // The carousel completes before the very end; the remaining scroll
+          // is the "hold" where the last slide (CTA) sits in place.
+          var animEnd = (n - 1) * 180 + 100;
+          var animFrac = animEnd / (animEnd + 120); // portion of scroll used to animate
+          var aprog = clamp(prog / animFrac, 0, 1);
+          // pos advances 0 .. (n-2): integer part = index in the LEFT slot.
+          var pos = aprog * (n - 2 >= 0 ? (n - 2) : 0);
+
+          // Geometry: measure a real project card's laid-out width (offsetWidth
+          // ignores transforms). Falls back to the first slide. The gutter is
+          // read from the resolved --gutter length.
+          var sample = stage.querySelector('.project-spotlight') || projects[0];
+          var slotW = sample.offsetWidth || (stage.clientWidth * 0.4);
+          var cs = getComputedStyle(stage);
+          var gutter = parseFloat(cs.getPropertyValue('--gutter'));
+          if (!gutter || isNaN(gutter)) gutter = 48;
+          var step = slotW + gutter;          // distance between slot centers
+          var leftX = -step / 2;              // slot 0 center, relative to stage center
+          var offLeft = -window.innerWidth * 0.7; // off-screen left target
+
+          projects.forEach(function (el, i) {
+            // slot position of this card relative to the current left card.
+            // s = 0 -> left slot, s = 1 -> right slot, s<0 leaving, s>1 waiting.
+            var s = i - pos;
+            var x, y = 0, op = 1, scale = 1;
+
+            if (s <= 0) {
+              // leaving to the left (s: 0 -> -1)
+              var t = clamp(-s, 0, 1);
+              var e = easeInOut(t);
+              x = leftX + e * (offLeft - leftX);
+              op = 1 - e;
+              scale = 1 - 0.05 * e;
+            } else if (s <= 1) {
+              // moving from right slot to left slot (s: 1 -> 0)
+              var e2 = easeInOut(1 - s); // 0 at right, 1 at left
+              x = leftX + step * (1 - e2);
+              op = 1;
+              scale = 1;
+            } else {
+              // incoming: slides in from the right toward the right slot
+              // (s: 2 -> 1), fully opaque the whole way.
+              var t3 = clamp(s - 1, 0, 1); // 0 at right slot, 1 fully waiting
+              var e3 = easeInOut(t3);
+              x = leftX + step + e3 * (window.innerWidth * 0.35); // slightly off to the right
+              y = e3 * vh * 2.2;           // rises in from far below the viewport
+              // solid while on/near screen; only the far-waiting cards (s>2)
+              // are hidden so they don't peek before their turn.
+              op = (s > 2) ? 0 : 1;
+              scale = 0.98 + 0.02 * (1 - e3);
+            }
+
+            // -50% centers the card on its computed point (top/left are 50%).
+            el.style.transform =
+              'translate(calc(-50% + ' + x.toFixed(1) + 'px), calc(-50% + ' + y.toFixed(1) + 'px)) scale(' + scale.toFixed(3) + ')';
+            el.style.opacity = op.toFixed(3);
+            el.style.zIndex = String(Math.round(100 - Math.abs(s - 0.5) * 10));
+            el.style.pointerEvents = (s > -0.5 && s < 1.5) ? 'auto' : 'none';
+          });
+        }
+
+        function onScroll() {
+          if (!ticking) { ticking = true; requestAnimationFrame(update); }
+        }
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onScroll, { passive: true });
+        update();
+      })();
+    </script>
+
+    <!-- Footer reveal: slides up + fades in when it enters the viewport -->
+    <script>
+      (function () {
+        var footer = document.querySelector('.footer-card');
+        if (!footer) return;
+
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduce || !('IntersectionObserver' in window)) {
+          footer.classList.add('is-visible');
+          return;
+        }
+
+        var obs = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            // Toggle on every enter/leave so the slide replays each time.
+            footer.classList.toggle('is-visible', entry.isIntersecting);
+          });
+        }, { threshold: 0, rootMargin: '0px 0px -15% 0px' });
+
+        obs.observe(footer);
+      })();
+    </script>
+
+    <!-- OPEN TO WORK badge: slides in from the left each time the hero
+         enters the viewport. -->
+    <script>
+      (function () {
+        var badge = document.querySelector('.badge--open');
+        if (!badge) return;
+
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduce || !('IntersectionObserver' in window)) {
+          badge.classList.add('is-revealed');
+          return;
+        }
+
+        var obs = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            badge.classList.toggle('is-revealed', entry.isIntersecting);
+          });
+        }, { threshold: 0.1 });
+
+        obs.observe(badge);
+      })();
+    </script>
+
+    <!-- Loading screen: 0→100 counter where only the changing digit rolls
+         (odometer style), then the overlay retires. -->
+    <script>
+      (function () {
+        var loader = document.getElementById('loader');
+        var counter = document.getElementById('loaderCounter');
+        if (!loader || !counter) return;
+
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduce) {
+          loader.classList.add('is-done');
+          return;
+        }
+
+        var reels = {
+          hundreds: counter.querySelector('[data-place="hundreds"]'),
+          tens:     counter.querySelector('[data-place="tens"]'),
+          ones:     counter.querySelector('[data-place="ones"]')
+        };
+        // Each reel holds 0..9 (hundreds only needs 0..1).
+        Object.keys(reels).forEach(function (k) {
+          var max = (k === 'hundreds') ? 1 : 9;
+          var html = '';
+          for (var d = 0; d <= max; d++) html += '<span>' + d + '</span>';
+          reels[k].innerHTML = html;
+        });
+
+        var digitH = reels.ones.children[0] ? reels.ones.children[0].offsetHeight : 0;
+        var hundredsBox = reels.hundreds.parentElement;
+        var tensBox = reels.tens.parentElement;
+
+        function show(value) {
+          var h = Math.floor(value / 100);
+          var t = Math.floor((value % 100) / 10);
+          var o = value % 10;
+          // Hide leading zeros: hundreds only at 100, tens hidden below 10.
+          hundredsBox.style.display = (value >= 100) ? '' : 'none';
+          tensBox.style.display = (value >= 10) ? '' : 'none';
+          reels.hundreds.style.transform = 'translateY(' + (-h * digitH) + 'px)';
+          reels.tens.style.transform = 'translateY(' + (-t * digitH) + 'px)';
+          reels.ones.style.transform = 'translateY(' + (-o * digitH) + 'px)';
+        }
+
+        document.body.style.overflow = 'hidden';
+        window.scrollTo(0, 0);
+
+        // Two-phase count: a quick ramp 0→95, then a deliberately slow
+        // crawl through the last 5 numbers (95→100).
+        var FAST_DUR = 1300;   // ms to reach 95
+        var SLOW_DUR = 2200;   // ms to crawl 95 → 100
+        var startTs = null;
+        function easeOut(x) { return 1 - Math.pow(1 - x, 3); }
+        function step(ts) {
+          if (startTs === null) startTs = ts;
+          var elapsed = ts - startTs;
+          var value;
+          if (elapsed < FAST_DUR) {
+            value = easeOut(elapsed / FAST_DUR) * 95;
+          } else {
+            var sp = Math.min(1, (elapsed - FAST_DUR) / SLOW_DUR);
+            value = 95 + easeOut(sp) * 5; // last 5 numbers, drawn out
+          }
+          show(Math.round(value));
+          if (elapsed < FAST_DUR + SLOW_DUR) requestAnimationFrame(step);
+          else show(100);
+        }
+        show(0);
+        requestAnimationFrame(step);
+
+        window.setTimeout(function () {
+          loader.classList.add('is-done');
+          document.body.style.overflow = '';
+        }, FAST_DUR + SLOW_DUR + 600);
+      })();
+    </script>
+
+    <!-- Smooth (inertial) scroll: eases the real scroll position toward a
+         wheel-driven target each frame, so scrolling feels weighted and
+         glides. Keeps native scrollTop so sticky + scroll observers work. -->
+    <script>
+      (function () {
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        // Skip on touch devices (they already have momentum scrolling).
+        var isTouch = window.matchMedia('(pointer: coarse)').matches;
+        if (reduce || isTouch) return;
+
+        var target = window.scrollY;
+        var current = target;
+        var running = false;
+        var EASE = 0.09; // lower = smoother/slower glide
+
+        function maxScroll() {
+          return Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+        }
+
+        function tick() {
+          var diff = target - current;
+          if (Math.abs(diff) < 0.5) {
+            current = target;
+            window.scrollTo(0, Math.round(current));
+            running = false;
+            return;
+          }
+          current += diff * EASE;
+          window.scrollTo(0, Math.round(current));
+          requestAnimationFrame(tick);
+        }
+
+        function start() {
+          if (!running) { running = true; requestAnimationFrame(tick); }
+        }
+
+        window.addEventListener('wheel', function (e) {
+          // let zoom / modifier scrolls pass through natively
+          if (e.ctrlKey) return;
+          e.preventDefault();
+          target = Math.min(maxScroll(), Math.max(0, target + e.deltaY));
+          start();
+        }, { passive: false });
+
+        // Keep target synced when scroll is driven by other means
+        // (keyboard, anchor jumps, resize) so we don't fight them.
+        window.addEventListener('keydown', function () { target = window.scrollY; current = target; });
+        window.addEventListener('resize', function () { target = window.scrollY; current = target; });
+
+        // Smooth anchor-link clicks too.
+        document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+          a.addEventListener('click', function (e) {
+            var id = a.getAttribute('href');
+            if (id === '#' ) return;
+            var el = document.querySelector(id);
+            if (!el) return;
+            e.preventDefault();
+            target = Math.min(maxScroll(), Math.max(0, el.getBoundingClientRect().top + window.scrollY));
+            start();
+          });
+        });
+      })();
+    </script>
+
+    <!-- Roll/swap on hover: each letter rolls up and an identical copy
+         enters from below (odometer style), staggered left to right. -->
+    <script>
+      (function () {
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduce) return;
+        var targets = document.querySelectorAll('.nav-links a, .footer-links a');
+
+        targets.forEach(function (el) {
+          var text = el.textContent;
+          el.textContent = '';
+          el.classList.add('roll-link');
+
+          for (var i = 0; i < text.length; i++) {
+            var ch = text[i];
+            var span = document.createElement('span');
+            span.className = 'roll-char';
+            // non-breaking space so spaces keep width
+            var glyph = (ch === ' ') ? ' ' : ch;
+            // staggered delay per letter, left to right
+            span.style.setProperty('--d', (i * 0.03).toFixed(3) + 's');
+            span.innerHTML =
+              '<span class="roll-inner">' +
+                '<span class="roll-face">' + glyph + '</span>' +
+                '<span class="roll-face">' + glyph + '</span>' +
+              '</span>';
+            el.appendChild(span);
+          }
+        });
+      })();
+    </script>
+
+    <!-- Contact form: validates, then submits to Web3Forms (no backend
+         needed). Messages are delivered straight to the configured email. -->
+    <script>
+      (function () {
+        var form = document.getElementById('contactForm');
+        if (!form) return;
+        var status = document.getElementById('contactStatus');
+        var submitBtn = form.querySelector('.contact-submit');
+        var submitText = form.querySelector('.contact-submit__text');
+        var defaultLabel = submitText ? submitText.textContent : '';
+
+        // Auto-grow the textarea so it never scrolls (no ugly scrollbar).
+        var ta = document.getElementById('cf-message');
+        if (ta) {
+          var autosize = function () {
+            ta.style.height = 'auto';
+            ta.style.height = ta.scrollHeight + 'px';
+          };
+          ta.addEventListener('input', autosize);
+          autosize();
+        }
+
+        function setStatus(msg, isError) {
+          status.textContent = msg;
+          status.classList.toggle('is-error', !!isError);
+        }
+
+        form.addEventListener('submit', function (e) {
+          e.preventDefault();
+          var name = form.name.value.trim();
+          var email = form.email.value.trim();
+          var message = form.message.value.trim();
+
+          if (!name || !email || !message) {
+            setStatus('Please fill in all fields.', true);
+            return;
+          }
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            setStatus('Please enter a valid email.', true);
+            return;
+          }
+
+          setStatus('Sending…', false);
+          if (submitBtn) submitBtn.disabled = true;
+          if (submitText) submitText.textContent = 'Sending…';
+
+          fetch('https://api.web3forms.com/submit', {
+            method: 'POST',
+            headers: { 'Accept': 'application/json' },
+            body: new FormData(form)
+          })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+              if (data.success) {
+                setStatus('Thanks! Your message has been sent.', false);
+                form.reset();
+                if (ta) { ta.style.height = 'auto'; }
+              } else {
+                setStatus(data.message || 'Something went wrong. Try again.', true);
+              }
+            })
+            .catch(function () {
+              setStatus('Network error. Please try again.', true);
+            })
+            .then(function () {
+              if (submitBtn) submitBtn.disabled = false;
+              if (submitText) submitText.textContent = defaultLabel;
+            });
+        });
+      })();
+    </script>
+
+    <!-- About section: words cascade in (fade + rise) when each block scrolls
+         into view. -->
+    <script>
+      (function () {
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduce || !('IntersectionObserver' in window)) return;
+
+        // Elements whose plain text gets split into animated words.
+        // (h3 titles inside .panel are excluded — their flex layout with the
+        // divider line would break if their text became flex items.)
+        var SELECTOR = [
+          '.about-text > p',
+          '.panel li strong', '.panel li span', '.panel li small', '.panel p',
+          '.stack-list strong', '.stack-list span',
+          '.projects-slide--title .projects-title',
+          '.projects-slide--title .projects-subtitle',
+          '.footer-name__first', '.footer-name__last',
+          '.contact-eyebrow', '.contact-title'
+        ].join(', ');
+        var blocks = Array.prototype.slice.call(document.querySelectorAll(SELECTOR));
+
+        // Split text into per-word spans. Walks child nodes so <br> is kept,
+        // and recurses into inline elements (e.g. <span class="accent">) so
+        // their words animate too while preserving their styling.
+        function splitInto(target, nodes, counter) {
+          nodes.forEach(function (node) {
+            if (node.nodeType === 3) { // text node
+              var words = node.textContent.split(/(\s+)/);
+              words.forEach(function (w) {
+                if (/^\s+$/.test(w)) {
+                  target.appendChild(document.createTextNode(w));
+                } else if (w.length) {
+                  var span = document.createElement('span');
+                  span.className = 'reveal-word';
+                  span.style.setProperty('--i', counter.i++);
+                  span.textContent = w;
+                  target.appendChild(span);
+                }
+              });
+            } else if (node.nodeType === 1 && node.tagName === 'BR') {
+              target.appendChild(node);
+            } else if (node.nodeType === 1) {
+              // inline wrapper: keep it, split its contents in place
+              var inner = Array.prototype.slice.call(node.childNodes);
+              node.textContent = '';
+              splitInto(node, inner, counter);
+              target.appendChild(node);
+            }
+          });
+        }
+        function splitWords(el) {
+          var nodes = Array.prototype.slice.call(el.childNodes);
+          el.textContent = '';
+          splitInto(el, nodes, { i: 0 });
+        }
+
+        blocks.forEach(splitWords);
+
+        // Hero text: cascade once on load, timed to start as the loading
+        // screen finishes clearing so it isn't hidden behind the overlay.
+        var heroBlocks = Array.prototype.slice.call(
+          document.querySelectorAll('.hero-title, .hero-intro')
+        );
+        heroBlocks.forEach(splitWords);
+        var loaderEl = document.getElementById('loader');
+        var heroDelay = (loaderEl && !window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+          ? 3600 : 150;
+        window.setTimeout(function () {
+          heroBlocks.forEach(function (b) { b.classList.add('reveal-on'); });
+        }, heroDelay);
+
+        // Reveal each block as it enters; reset when it leaves so the
+        // cascade replays every time it scrolls back into view.
+        var obs = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            entry.target.classList.toggle('reveal-on', entry.isIntersecting);
+          });
+        }, { threshold: 0.2, rootMargin: '0px 0px -10% 0px' });
+
+        blocks.forEach(function (b) { obs.observe(b); });
+
+        // Contact form: fields + button slide in from the right, staggered.
+        var contactForm = document.getElementById('contactForm');
+        if (contactForm) {
+          var items = contactForm.querySelectorAll('.field, .contact-action');
+          items.forEach(function (el, i) { el.style.setProperty('--i', i); });
+          var formObs = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+              contactForm.classList.toggle('is-shown', entry.isIntersecting);
+            });
+          }, { threshold: 0.15, rootMargin: '0px 0px -10% 0px' });
+          formObs.observe(contactForm);
+        }
+      })();
+    </script>
+
+  </body>
 </html>
