@@ -635,13 +635,15 @@ body::before {
   max-width: 42ch;
 }
 
-/* Vertical divider on the left edge of each card / CTA panel. */
+/* Vertical divider on the left edge of each card / CTA panel — about the
+   height of the project image, centred vertically. */
 .work-card__line {
   position: absolute;
   left: 0;
-  top: 0;
+  top: 50%;
+  transform: translateY(-50%);
   width: 1px;
-  height: 100%;
+  height: clamp(280px, 44vh, 460px);
   background: rgba(255, 255, 255, 0.16);
   pointer-events: none;
 }
@@ -1177,11 +1179,13 @@ body::before {
    links stacked below it. */
 .footer-card {
   max-width: calc(var(--content-max) + 2 * var(--content-pad));
-  margin: 48px auto 0;
-  padding: 48px var(--content-pad) 64px;
+  margin: 0 auto;
+  padding: clamp(80px, 14vh, 140px) var(--content-pad);
+  min-height: 100vh;       /* full-screen footer */
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  justify-content: space-between;   /* nav/name up top, links at the bottom */
   gap: 28px;
   background: transparent;
   border: none;
@@ -1971,4 +1975,105 @@ body::before {
 
 @media (max-width: 760px) {
   .scroll-progress { display: none; }   /* skip on phones */
+}
+
+/* ---------- VOLUME BARS (projects horizontal scroll) ----------
+   A full-width row of vertical bars at the top. Visible only while in the
+   pinned projects section. Each bar grows taller + turns white as the
+   left→right progress passes it. */
+.bars {
+  position: fixed;
+  top: clamp(70px, 10vh, 110px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  width: 100%;
+  max-width: var(--content-max);   /* align with the content margins */
+  /* above the navbar's blur strip (999) so the bars aren't blurred */
+  z-index: 1001;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 40px;
+  /* width matches the About (content-max, no extra inner padding) */
+  padding: 0;
+  width: calc(100% - 2 * var(--content-pad));
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.bars.is-on {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.bars__bar {
+  flex: 0 0 auto;
+  width: 2px;
+  /* --h (0..1): height peak at the scroll position.
+     --p (0..1): c9c9c9 fill for the bars already passed (left→right). */
+  height: calc(6px + 18px * var(--h, 0));
+  background: rgba(201, 201, 201, calc(0.16 + 0.84 * var(--p, 0)));
+  border-radius: 2px;
+  transition: height 0.18s ease, background-color 0.18s ease;
+}
+
+@media (max-width: 760px) {
+  .bars { display: none; }
+}
+
+/* ---------- FOOTER NAV + footer takeover ----------
+   When the footer is in view, the fixed navbar fades out and its links live
+   in the footer instead; the contact form is hidden so the footer is clean. */
+.footer-top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.footer-nav {
+  display: flex;
+  gap: 22px;
+  padding-bottom: 6px;
+}
+
+.footer-nav a {
+  color: #c9c9c9;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 500;
+  opacity: 0.92;
+  transition: opacity 0.2s ease;
+}
+
+.footer-nav a:hover { opacity: 0.6; }
+
+/* Navbar fades/lifts away once we reach the footer. */
+.topbar,
+.nav-blur {
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+body.at-footer .topbar,
+body.at-footer .nav-blur {
+  opacity: 0;
+  transform: translateY(-12px);
+  pointer-events: none;
+}
+
+/* Hide the whole contact block (heading + form) at the footer, so the
+   full-screen footer stands on its own. */
+.contact-inner {
+  transition: opacity 0.4s ease;
+}
+
+body.at-footer .contact-inner {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .footer-nav { gap: 16px; }
 }
