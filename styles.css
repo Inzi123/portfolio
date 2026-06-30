@@ -10,6 +10,10 @@
   --muted: #c9c9c9;
   --line: rgba(255, 255, 255, 0.08);
   --accent: #ff4242;
+  /* Shared content column — every section aligns to this width. The padding
+     grows on wider screens so the content never hugs the edges. */
+  --content-max: 1000px;
+  --content-pad: clamp(24px, 5vw, 64px);
 }
 
 * { box-sizing: border-box; }
@@ -166,8 +170,8 @@ body::before {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  max-width: 1200px;
-  padding: 32px 24px 16px;
+  max-width: calc(var(--content-max) + 2 * var(--content-pad));
+  padding: 32px var(--content-pad) 16px;
   background: transparent;
 }
 
@@ -505,9 +509,9 @@ body::before {
 
 /* ---------- CONTENT BELOW HERO ---------- */
 .page-shell {
-  max-width: 1480px;
+  max-width: calc(var(--content-max) + 2 * var(--content-pad));
   margin: 0 auto;
-  padding: 80px 24px 80px;
+  padding: 80px var(--content-pad) 80px;
 }
 
 .section-title {
@@ -539,156 +543,132 @@ body::before {
   grid-column: 1 / -1;
 }
 
-/* ---------- STACKED PROJECTS ----------
-   The wrapper is tall (set by JS = N × 100vh) and the stage inside is
-   sticky, so the projects stay on screen while you scroll through that
-   range. JS slides each project: incoming rises from below, outgoing is
-   pushed off to the left. */
-.projects-stack {
+/* ---------- PROJECTS — pinned horizontal carousel (GSAP) ----------
+   #work-section pins to the viewport; .work-track translates left through the
+   panels as you scroll. Each panel is 50vw; project cards have a vertical
+   divider on their left edge. Full-bleed (escapes the page-shell column). */
+#work-section {
   position: relative;
-}
-
-.projects-stage {
-  position: sticky;
-  top: 0;
+  width: 100%;
   height: 100vh;
-  /* No horizontal clipping: cards slide in from the right / out to the left
-     fully visible. body has overflow-x: hidden so no page scrollbar appears. */
-  overflow: visible;
+  overflow: hidden;
 }
 
-/* Slides (title + project cards). Two are visible at once (slot 0 left,
-   slot 1 right). JS positions every slide via inline transform/opacity each
-   frame. Slot width + gutter come from these custom properties.
-   --pad keeps the pair off the viewport edges; slot width is derived from
-   the remaining space so the two never overlap. */
-.projects-stage {
-  --pad: clamp(24px, 5vw, 96px);
-  --gutter: clamp(48px, 7vw, 120px);
-  --slot-w: min(500px, (100vw - 2 * var(--pad) - var(--gutter)) / 2);
-}
-
-.projects-slide {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: var(--slot-w);
-  will-change: transform, opacity;
-  /* Smooth the per-frame scroll updates: strong ease-out so cards move fast
-     then settle slowly (fast → slow). */
-  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1),
-              opacity 0.5s ease;
-}
-
-/* Project card layout (image on top, copy below). Content centered so the
-   image/copy (88% wide) sits evenly within the slot. */
-.projects-slide.project-spotlight {
+.work-track {
   display: flex;
-  flex-direction: column;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 16px;
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  backdrop-filter: none;
+  height: 100%;
+  width: max-content;
+  will-change: transform;
 }
 
-/* The intro "My selected projects" slide. */
-.projects-slide--title {
+.work-panel {
+  flex: 0 0 50vw;
+  width: 50vw;
+  height: 100%;
+  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 16px;
-  width: var(--slot-w);
+  padding: 0 clamp(40px, 6vw, 110px);
 }
 
-.projects-eyebrow {
-  margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  font-size: 0.78rem;
-  color: var(--accent);
-  font-weight: 600;
-}
+/* Title panel */
+.work-panel--title { align-items: flex-start; }
 
-.projects-title {
+.work-title {
   margin: 0;
-  font-size: clamp(2rem, 4vw, 3.4rem);
+  font-size: clamp(2.2rem, 4vw, 3.6rem);
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.05;
   color: #c9c9c9;
 }
 
-.projects-subtitle {
-  margin: 0;
-  font-size: 1rem;
+.work-subtitle {
+  margin: 16px 0 0;
+  font-size: 1.05rem;
   line-height: 1.5;
   color: #c9c9c9;
-  max-width: 34ch;
+  max-width: 42ch;
 }
 
-/* Final slide: a call-to-action that scrolls to the contact form. */
-.projects-slide--cta {
+/* Vertical divider on the left edge of each card / CTA panel. */
+.work-card__line {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.16);
+  pointer-events: none;
+}
+
+.work-card__inner {
+  width: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: 16px;
-  width: var(--slot-w);
+  gap: 18px;
 }
 
-.projects-cta-eyebrow {
-  margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  font-size: 0.78rem;
-  color: var(--accent);
-  font-weight: 600;
+/* CTA panel */
+.work-cta__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.projects-cta-title {
+.work-cta-title {
   margin: 0;
-  font-size: clamp(2rem, 4vw, 3.4rem);
+  font-size: clamp(2rem, 3.6vw, 3.2rem);
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.05;
   color: #c9c9c9;
 }
 
-.projects-cta-sub {
+.work-cta-sub {
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.05rem;
   line-height: 1.5;
   color: #c9c9c9;
-  max-width: 34ch;
+  max-width: 40ch;
 }
 
-/* CTA button reuses the form's .contact-submit styles; just align it left
-   and add top spacing within the slide. */
 .projects-cta-btn {
   align-self: flex-start;
   margin-top: 10px;
   text-decoration: none;
 }
 
-@media (max-width: 900px) {
-  .projects-stack { height: auto !important; }
-  .projects-stage {
+/* Mobile: no pin, no horizontal scroll — stack the panels vertically. */
+@media (max-width: 760px) {
+  #work-section {
+    width: auto;
+    margin-left: 0;
     height: auto;
     overflow: visible;
-    position: static;
   }
-  .projects-slide {
-    position: relative;
-    top: auto;
-    left: auto;
+  .work-track {
+    flex-direction: column;
     width: 100%;
-    margin: 0 auto 64px;
-    max-width: 480px;
+    align-items: stretch;
     transform: none !important;
-    opacity: 1 !important;
   }
-  .projects-slide--title { max-width: 480px; }
+  .work-panel {
+    flex: none;
+    width: 100%;
+    height: auto;
+    padding: 48px 0;
+    justify-content: flex-start;
+  }
+  .work-card__line { display: none; }
+  .work-card + .work-card .work-card__inner,
+  .work-card .work-card__inner {
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    padding-top: 40px;
+  }
 }
 
 .eyebrow,
@@ -700,8 +680,8 @@ body::before {
   font-weight: 600;
 }
 
-.project-spotlight .project-visual {
-  width: 88%;
+.work-card .project-visual {
+  width: 100%;
   position: relative;
   overflow: hidden;
   border: 1px solid var(--line);
@@ -749,8 +729,7 @@ body::before {
 }
 
 .project-copy-wrap {
-  /* Match the image width so the button's right edge lines up with it. */
-  width: 88%;
+  width: 100%;
   padding: 0;
   /* Title + tiny description on the left, button pushed to the right. */
   display: flex;
@@ -772,7 +751,7 @@ body::before {
   max-width: 18ch;
 }
 
-.side-card h2 {
+.project-meta h2 {
   font-size: clamp(1.5rem, 2.4vw, 2rem);
   line-height: 1;
   margin: 0;
@@ -938,7 +917,7 @@ body::before {
 .about-card {
   grid-column: 1 / -1;
   width: 100%;
-  max-width: 1200px;
+  max-width: var(--content-max);
   margin: 0 auto;
   padding: 12vh 0;
   display: grid;
@@ -995,8 +974,15 @@ body::before {
 .about-visual img {
   width: 100%;
   display: block;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 1 / 1;        /* square — shorter than the old 4:5 portrait */
   object-fit: cover;
+  /* Greyscale by default, fades to full color on hover. */
+  filter: grayscale(1);
+  transition: filter 0.5s ease;
+}
+
+.about-visual:hover img {
+  filter: grayscale(0);
 }
 
 @media (max-width: 900px) {
@@ -1087,9 +1073,9 @@ body::before {
 /* Footer: no panel background. The name reads huge, with the social
    links stacked below it. */
 .footer-card {
-  max-width: 1200px;
+  max-width: calc(var(--content-max) + 2 * var(--content-pad));
   margin: 48px auto 0;
-  padding: 48px 0 64px;
+  padding: 48px var(--content-pad) 64px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -1134,9 +1120,9 @@ body::before {
 
 /* ---------- CONTACT FORM ---------- */
 .contact-section {
-  max-width: 1200px;
+  max-width: calc(var(--content-max) + 2 * var(--content-pad));
   margin: 0 auto;
-  padding: 12vh 24px 8vh;
+  padding: 12vh var(--content-pad) 8vh;
   border-top: 1px solid rgba(255, 255, 255, 0.16);
   border-bottom: 1px solid rgba(255, 255, 255, 0.16);
 }
@@ -1384,4 +1370,78 @@ body::before {
   .badge { display: none; }
   .hero-intro { max-width: 100%; }
   .side-card { border-radius: 18px; }
+}
+
+/* ============================================================
+   MOBILE — consolidated fixes for phones (≤640px). Scales down the
+   fixed-size headings and tightens spacing so nothing overflows.
+   ============================================================ */
+@media (max-width: 640px) {
+  /* Navbar: tighter, smaller brand, nav links don't crowd. */
+  .topbar {
+    padding: 20px 18px 14px;
+  }
+  .brand { font-size: 18px; }
+  .nav-links { gap: 14px; font-size: 14px; }
+  .nav-links a { font-size: 14px; }
+
+  /* Hero: title + intro fluid so they never overflow. */
+  .hero { padding: 24px 20px 40px; }
+  .hero-title {
+    font-size: clamp(2.2rem, 12vw, 3.4rem);
+    white-space: normal;          /* allow wrapping on small screens */
+  }
+  .hero-intro { font-size: 1.05rem; padding: 0 4px; }
+
+  /* Page shell padding */
+  .page-shell { padding: 64px 18px; }
+
+  /* Projects: stacked vertical on phones; comfy spacing + type. */
+  .work-title,
+  .work-cta-title { font-size: clamp(1.8rem, 9vw, 2.4rem); }
+  .work-card .project-visual,
+  .project-copy-wrap { width: 100%; }   /* full width on phones */
+  .project-meta h2 { font-size: 1.6rem; }
+
+  /* About: image first, comfortable text size. Keep the image short and
+     capped so it doesn't dominate the screen on phones. */
+  .about-card { padding: 56px 0; }
+  .about-text p { font-size: 1.05rem; }
+  .about-visual img {
+    aspect-ratio: auto;      /* don't derive height from full width */
+    height: 240px;           /* fixed, compact height */
+    object-fit: cover;
+  }
+
+  /* Info grid (Education/Experience/etc.) stacks to one column; the Stack
+     list keeps two columns. */
+  .info-grid { grid-template-columns: 1fr; gap: 36px; }
+  .stack-list { grid-template-columns: 1fr 1fr; gap: 18px 20px; }
+  .panel h3 { font-size: 20px; }
+
+  /* Contact: single column, smaller heading, comfy padding. No bottom
+     divider on mobile. */
+  .contact-section { padding: 8vh 18px 6vh; border-bottom: none; }
+  .contact-title { font-size: clamp(1.9rem, 9vw, 2.6rem); }
+  .contact-action {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  /* Footer: name scales down so it fits the viewport width. */
+  .footer-card { padding: 40px 0 56px; }
+  .footer-name__first { font-size: clamp(2.4rem, 13vw, 3.4rem); }
+  .footer-name__last  { font-size: clamp(3rem, 17vw, 4.6rem); }
+  .footer-links { gap: 18px; }
+  .footer-card a { font-size: 16px; }
+
+  /* Loading counter a touch smaller so the % fits. */
+  .loader { padding: 32px 24px; }
+}
+
+/* Very small phones */
+@media (max-width: 380px) {
+  .nav-links { gap: 10px; }
+  .hero-title { font-size: clamp(1.9rem, 11vw, 2.6rem); }
 }

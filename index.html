@@ -20,6 +20,9 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
+    <!-- GSAP + ScrollTrigger for the pinned horizontal projects carousel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
   </head>
   <body>
     <!-- ===================== LOADING SCREEN =====================
@@ -116,22 +119,43 @@
       </div>
     </section>
 
-    <!-- ===================== CONTENT ===================== -->
-    <main class="page-shell">
-      <!-- Featured work -->
-      <section id="work">
-        <!-- Stacked projects: two visible at a time. As you scroll, the
-             leftmost is pushed off-left, the others shift one slot left, and a
-             new one rises in from the bottom-right. The stage is sticky over a
-             tall wrapper (set by JS). -->
-        <div class="projects-stack" id="projectsStack">
-          <div class="projects-stage">
-            <div class="projects-slide projects-slide--title">
-              <h2 class="projects-title">My selected projects</h2>
-              <p class="projects-subtitle">A few products I’ve designed and shipped, from design systems to full interfaces. Scroll to explore.</p>
+    <!-- Featured work — horizontal pinned carousel (GSAP). Sits OUTSIDE the
+         padded page-shell so ScrollTrigger can pin it cleanly (no jump). -->
+    <section id="work-section" aria-label="Selected work">
+        <div class="work-track" id="workTrack">
+
+          <!-- Title panel -->
+          <div class="work-panel work-panel--title">
+            <h2 class="work-title">My selected projects</h2>
+            <p class="work-subtitle">A few products I’ve designed and shipped, from design systems to full interfaces.</p>
+          </div>
+
+          <!-- Project cards -->
+          <div class="work-panel work-card">
+            <span class="work-card__line" aria-hidden="true"></span>
+            <div class="work-card__inner">
+              <a class="project-visual" href="https://altruistic-habits-426334.framer.app/secondpulse" aria-label="See SecondPulse project">
+                <img src="https://framerusercontent.com/images/COInmXaJan2gf6XaY9ogYQnfQ0I.png?width=1440&amp;height=854" alt="SecondPulse interface preview" />
+                <span class="project-cursor" aria-hidden="true">See project</span>
+              </a>
+              <div class="project-copy-wrap">
+                <div class="project-meta">
+                  <h2>SecondPulse</h2>
+                  <p class="project-desc">Intelligent workspace platform &amp; design system.</p>
+                </div>
+                <a class="project-link" href="https://altruistic-habits-426334.framer.app/secondpulse">
+                  <span class="project-link__dot" aria-hidden="true">
+                    <svg class="project-link__arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                  </span>
+                  <span class="project-link__text">VIEW PROJECT</span>
+                </a>
+              </div>
             </div>
+          </div>
 
-            <aside class="projects-slide side-card project-spotlight">
+          <div class="work-panel work-card">
+            <span class="work-card__line" aria-hidden="true"></span>
+            <div class="work-card__inner">
               <a class="project-visual" href="https://altruistic-habits-426334.framer.app/secondpulse" aria-label="See SecondPulse project">
                 <img src="https://framerusercontent.com/images/COInmXaJan2gf6XaY9ogYQnfQ0I.png?width=1440&amp;height=854" alt="SecondPulse interface preview" />
                 <span class="project-cursor" aria-hidden="true">See project</span>
@@ -148,9 +172,12 @@
                   <span class="project-link__text">VIEW PROJECT</span>
                 </a>
               </div>
-            </aside>
+            </div>
+          </div>
 
-            <aside class="projects-slide side-card project-spotlight">
+          <div class="work-panel work-card">
+            <span class="work-card__line" aria-hidden="true"></span>
+            <div class="work-card__inner">
               <a class="project-visual" href="https://altruistic-habits-426334.framer.app/secondpulse" aria-label="See SecondPulse project">
                 <img src="https://framerusercontent.com/images/COInmXaJan2gf6XaY9ogYQnfQ0I.png?width=1440&amp;height=854" alt="SecondPulse interface preview" />
                 <span class="project-cursor" aria-hidden="true">See project</span>
@@ -167,9 +194,12 @@
                   <span class="project-link__text">VIEW PROJECT</span>
                 </a>
               </div>
-            </aside>
+            </div>
+          </div>
 
-            <aside class="projects-slide side-card project-spotlight">
+          <div class="work-panel work-card">
+            <span class="work-card__line" aria-hidden="true"></span>
+            <div class="work-card__inner">
               <a class="project-visual" href="https://altruistic-habits-426334.framer.app/secondpulse" aria-label="See SecondPulse project">
                 <img src="https://framerusercontent.com/images/COInmXaJan2gf6XaY9ogYQnfQ0I.png?width=1440&amp;height=854" alt="SecondPulse interface preview" />
                 <span class="project-cursor" aria-hidden="true">See project</span>
@@ -186,49 +216,37 @@
                   <span class="project-link__text">VIEW PROJECT</span>
                 </a>
               </div>
-            </aside>
+            </div>
+          </div>
 
-            <aside class="projects-slide side-card project-spotlight">
-              <a class="project-visual" href="https://altruistic-habits-426334.framer.app/secondpulse" aria-label="See SecondPulse project">
-                <img src="https://framerusercontent.com/images/COInmXaJan2gf6XaY9ogYQnfQ0I.png?width=1440&amp;height=854" alt="SecondPulse interface preview" />
-                <span class="project-cursor" aria-hidden="true">See project</span>
-              </a>
-              <div class="project-copy-wrap">
-                <div class="project-meta">
-                  <h2>SecondPulse</h2>
-                  <p class="project-desc">Intelligent workspace platform &amp; design system.</p>
-                </div>
-                <a class="project-link" href="https://altruistic-habits-426334.framer.app/secondpulse">
-                  <span class="project-link__dot" aria-hidden="true">
-                    <svg class="project-link__arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                  </span>
-                  <span class="project-link__text">VIEW PROJECT</span>
-                </a>
-              </div>
-            </aside>
-
-            <div class="projects-slide projects-slide--cta">
-              <h2 class="projects-cta-title">Have a project in mind?</h2>
-              <p class="projects-cta-sub">Let’s talk about how we can build it together.</p>
+          <!-- CTA panel -->
+          <div class="work-panel work-panel--cta">
+            <span class="work-card__line" aria-hidden="true"></span>
+            <div class="work-cta__inner">
+              <h2 class="work-cta-title">Have a project in mind?</h2>
+              <p class="work-cta-sub">Let’s talk about how we can build it together.</p>
               <a class="contact-submit projects-cta-btn" href="#contact">
-                <span class="contact-submit__slot contact-submit__slot--left" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                </span>
                 <span class="contact-submit__text">Get in touch</span>
-                <span class="contact-submit__slot contact-submit__slot--right" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                <span class="contact-submit__slot" aria-hidden="true">
+                  <svg class="arrow-out" viewBox="0 0 24 24" fill="none"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                  <svg class="arrow-in" viewBox="0 0 24 24" fill="none"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
                 </span>
               </a>
             </div>
           </div>
-        </div>
 
+        </div>
+      </section>
+
+    <!-- ===================== CONTENT ===================== -->
+    <main class="page-shell">
+      <section id="work">
         <div class="content-grid">
           <!-- About -->
           <section id="about" class="about-card">
             <div class="about-visual">
               <img
-                src="https://framerusercontent.com/images/COInmXaJan2gf6XaY9ogYQnfQ0I.png?width=1440&amp;height=854"
+                src="about.avif"
                 alt="Lucas Inzirillo"
               />
             </div>
@@ -627,7 +645,7 @@
         // --- Nav link hover: dock to the top-right corner of the link ---
         // Includes the project VIEW PROJECT link and the footer links so they
         // behave like the navbar links on hover.
-        var links = document.querySelectorAll('.nav-links a, .project-link, .footer-links a');
+        var links = document.querySelectorAll('.nav-links a, .project-link, .footer-links a, .contact-submit, .about-visual');
         links.forEach(function (link) {
           link.addEventListener('mouseenter', function () {
             var r = link.getBoundingClientRect();
@@ -742,116 +760,87 @@
       })();
     </script>
 
-    <!-- Stacked projects: as you scroll the wrapper, each project rises from
-         below into center, then is pushed off to the left by the next one. -->
+    <!-- Projects: pinned horizontal carousel via GSAP ScrollTrigger. The
+         section pins; the track translates left by its overflow width. -->
     <script>
-      (function () {
+      window.addEventListener('load', function () {
         var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        var stack = document.getElementById('projectsStack');
-        if (!stack || reduce) return;
+        var isMobile = window.matchMedia('(max-width: 760px)').matches;
+        var section = document.getElementById('work-section');
+        var track = document.getElementById('workTrack');
+        if (!section || !track) return;
 
-        var projects = Array.prototype.slice.call(
-          stack.querySelectorAll('.projects-slide')
-        );
-        var n = projects.length;
-        if (!n) return;
+        // Mobile or no GSAP / reduced motion → leave the stacked vertical
+        // layout (CSS handles it), no pinning.
+        if (isMobile || reduce || !window.gsap || !window.ScrollTrigger) return;
 
-        // Two cards are visible at once; the track advances one card per
-        // viewport of scroll. With n cards there are (n-1) transitions.
-        var stage = stack.querySelector('.projects-stage');
-        function setHeight() {
-          // vh of scroll per transition — higher = each project lingers longer
-          // so there's time to read before it slides away.
-          var perStep = 180;
-          // HOLD = extra vh after the last slide lands, so the final CTA stays
-          // on screen for a beat before the section scrolls away.
-          var hold = 120;
-          stack.style.height = ((n - 1) * perStep + 100 + hold) + 'vh';
-        }
-        setHeight();
-        window.addEventListener('resize', setHeight);
+        gsap.registerPlugin(ScrollTrigger);
 
-        var ticking = false;
-        function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
-        // Linear here — the CSS transition on .projects-slide provides the
-        // fast→slow ease-out, so JS just maps scroll position directly.
-        function easeInOut(x) { return x; }
+        var st;
+        var cardTriggers = [];
+        var cards = Array.prototype.slice.call(track.querySelectorAll('.work-card__inner'));
 
-        function update() {
-          ticking = false;
-          var vh = window.innerHeight;
-          var rect = stack.getBoundingClientRect();
-          var total = rect.height - vh;
-          var scrolled = clamp(-rect.top, 0, total);
-          var prog = total > 0 ? scrolled / total : 0;
-          // The carousel completes before the very end; the remaining scroll
-          // is the "hold" where the last slide (CTA) sits in place.
-          var animEnd = (n - 1) * 180 + 100;
-          var animFrac = animEnd / (animEnd + 120); // portion of scroll used to animate
-          var aprog = clamp(prog / animFrac, 0, 1);
-          // pos advances 0 .. (n-2): integer part = index in the LEFT slot.
-          var pos = aprog * (n - 2 >= 0 ? (n - 2) : 0);
+        function build() {
+          if (st) st.kill();
+          cardTriggers.forEach(function (t) { t.kill(); });
+          cardTriggers = [];
+          gsap.set(track, { x: 0, clearProps: '' });
+          cards.forEach(function (c) { gsap.set(c, { y: 0 }); });
 
-          // Geometry: measure a real project card's laid-out width (offsetWidth
-          // ignores transforms). Falls back to the first slide. The gutter is
-          // read from the resolved --gutter length.
-          var sample = stage.querySelector('.project-spotlight') || projects[0];
-          var slotW = sample.offsetWidth || (stage.clientWidth * 0.4);
-          var cs = getComputedStyle(stage);
-          var gutter = parseFloat(cs.getPropertyValue('--gutter'));
-          if (!gutter || isNaN(gutter)) gutter = 48;
-          var step = slotW + gutter;          // distance between slot centers
-          var leftX = -step / 2;              // slot 0 center, relative to stage center
-          var offLeft = -window.innerWidth * 0.7; // off-screen left target
+          var distance = track.scrollWidth - window.innerWidth;
+          if (distance <= 0) return;
 
-          projects.forEach(function (el, i) {
-            // slot position of this card relative to the current left card.
-            // s = 0 -> left slot, s = 1 -> right slot, s<0 leaving, s>1 waiting.
-            var s = i - pos;
-            var x, y = 0, op = 1, scale = 1;
+          // SCROLL_FACTOR stretches the vertical scroll length relative to the
+          // horizontal travel: >1 means each card lingers longer in place
+          // (more scroll to move the same distance). 1 = 1:1.
+          var SCROLL_FACTOR = 1.8;
+          var scrollLen = distance * SCROLL_FACTOR;
 
-            if (s <= 0) {
-              // leaving to the left (s: 0 -> -1)
-              var t = clamp(-s, 0, 1);
-              var e = easeInOut(t);
-              x = leftX + e * (offLeft - leftX);
-              op = 1 - e;
-              scale = 1 - 0.05 * e;
-            } else if (s <= 1) {
-              // moving from right slot to left slot (s: 1 -> 0)
-              var e2 = easeInOut(1 - s); // 0 at right, 1 at left
-              x = leftX + step * (1 - e2);
-              op = 1;
-              scale = 1;
-            } else {
-              // incoming: slides in from the right toward the right slot
-              // (s: 2 -> 1), fully opaque the whole way.
-              var t3 = clamp(s - 1, 0, 1); // 0 at right slot, 1 fully waiting
-              var e3 = easeInOut(t3);
-              x = leftX + step + e3 * (window.innerWidth * 0.35); // slightly off to the right
-              y = e3 * vh * 2.2;           // rises in from far below the viewport
-              // solid while on/near screen; only the far-waiting cards (s>2)
-              // are hidden so they don't peek before their turn.
-              op = (s > 2) ? 0 : 1;
-              scale = 0.98 + 0.02 * (1 - e3);
-            }
+          var tween = gsap.to(track, {
+            x: -distance,
+            ease: 'none'
+          });
 
-            // -50% centers the card on its computed point (top/left are 50%).
-            el.style.transform =
-              'translate(calc(-50% + ' + x.toFixed(1) + 'px), calc(-50% + ' + y.toFixed(1) + 'px)) scale(' + scale.toFixed(3) + ')';
-            el.style.opacity = op.toFixed(3);
-            el.style.zIndex = String(Math.round(100 - Math.abs(s - 0.5) * 10));
-            el.style.pointerEvents = (s > -0.5 && s < 1.5) ? 'auto' : 'none';
+          st = ScrollTrigger.create({
+            trigger: section,
+            start: 'top top',
+            end: '+=' + scrollLen,
+            pin: true,
+            pinSpacing: true,
+            scrub: 1,
+            invalidateOnRefresh: true,
+            animation: tween
+          });
+
+          // Each card rises a touch from below as it scrolls into the viewport.
+          // containerAnimation ties these triggers to the horizontal tween.
+          cards.forEach(function (card) {
+            var t = gsap.fromTo(card,
+              { yPercent: 60 },
+              {
+                yPercent: 0,
+                ease: 'none',
+                scrollTrigger: {
+                  trigger: card,
+                  containerAnimation: tween,
+                  // Start while the card is still off-screen to the right and
+                  // finish only once it reaches the centre, so the rise spans
+                  // the whole entry instead of snapping up at the end.
+                  start: 'left right',     // card's left edge at viewport right
+                  end: 'left center',      // ...travels until it hits centre
+                  scrub: true,
+                  invalidateOnRefresh: true
+                }
+              }
+            );
+            if (t.scrollTrigger) cardTriggers.push(t.scrollTrigger);
           });
         }
 
-        function onScroll() {
-          if (!ticking) { ticking = true; requestAnimationFrame(update); }
-        }
-        window.addEventListener('scroll', onScroll, { passive: true });
-        window.addEventListener('resize', onScroll, { passive: true });
-        update();
-      })();
+        build();
+        // Rebuild geometry on resize (debounced via ScrollTrigger.refresh).
+        window.addEventListener('resize', function () { ScrollTrigger.refresh(); });
+      });
     </script>
 
     <!-- Footer reveal: slides up + fades in when it enters the viewport -->
@@ -984,7 +973,9 @@
         var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         // Skip on touch devices (they already have momentum scrolling).
         var isTouch = window.matchMedia('(pointer: coarse)').matches;
-        if (reduce || isTouch) return;
+        // Disabled: GSAP ScrollTrigger pins the projects section and needs
+        // native scroll — a wheel-hijacking smooth scroll fights the pin.
+        if (true || reduce || isTouch) return;
 
         var target = window.scrollY;
         var current = target;
@@ -1158,8 +1149,8 @@
           '.about-text > p',
           '.panel li strong', '.panel li span', '.panel li small', '.panel p',
           '.stack-list strong', '.stack-list span',
-          '.projects-slide--title .projects-title',
-          '.projects-slide--title .projects-subtitle',
+          '.work-panel--title .work-title',
+          '.work-panel--title .work-subtitle',
           '.footer-name__first', '.footer-name__last',
           '.contact-eyebrow', '.contact-title'
         ].join(', ');
@@ -1202,18 +1193,12 @@
 
         blocks.forEach(splitWords);
 
-        // Hero text: cascade once on load, timed to start as the loading
-        // screen finishes clearing so it isn't hidden behind the overlay.
+        // Hero text gets split too; it cascades on load (timed to the loader)
+        // and then replays on scroll like the rest.
         var heroBlocks = Array.prototype.slice.call(
           document.querySelectorAll('.hero-title, .hero-intro')
         );
         heroBlocks.forEach(splitWords);
-        var loaderEl = document.getElementById('loader');
-        var heroDelay = (loaderEl && !window.matchMedia('(prefers-reduced-motion: reduce)').matches)
-          ? 3600 : 150;
-        window.setTimeout(function () {
-          heroBlocks.forEach(function (b) { b.classList.add('reveal-on'); });
-        }, heroDelay);
 
         // Reveal each block as it enters; reset when it leaves so the
         // cascade replays every time it scrolls back into view.
@@ -1224,6 +1209,18 @@
         }, { threshold: 0.2, rootMargin: '0px 0px -10% 0px' });
 
         blocks.forEach(function (b) { obs.observe(b); });
+
+        // First hero reveal is timed to the loader clearing; afterwards the
+        // observer drives replays as it scrolls in and out of view.
+        var loaderEl = document.getElementById('loader');
+        var heroDelay = (loaderEl && !window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+          ? 3600 : 150;
+        window.setTimeout(function () {
+          heroBlocks.forEach(function (b) {
+            b.classList.add('reveal-on');
+            obs.observe(b);
+          });
+        }, heroDelay);
 
         // Contact form: fields + button slide in from the right, staggered.
         var contactForm = document.getElementById('contactForm');
