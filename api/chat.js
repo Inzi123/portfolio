@@ -40,12 +40,12 @@ Spanish (native), English (C1), German (B2). I've lived and worked in Germany an
 # Experience (with timeline, if asked about my background/jobs)
 - SecondPulse (AI startup, Germany) — UX/UI Designer, October 2024 to PRESENT. I am STILL working here right now; it's a current, ongoing role. Never say I left or finished it.
 - Buena.org — design agency (Portland, US). Working with them since February 2026 (current).
-- Miinta — UX/UI Designer (mobile onboarding flows, multi-screen bilingual UI copy in Spanish and English). Always mention Miinta when listing my experience or clients.
+- Miinta — UX/UI Designer, October 2025 to present (current). Mobile onboarding flows and multi-screen bilingual UI copy (Spanish and English). Always mention Miinta when listing my experience or clients.
 - Viavervit — UX/UI Designer, August 2023 to March 2025 (design systems, user research, agile work with dev/product teams).
 - Cazin — UX/UI Designer, June 2024 to March 2025 (web interfaces, building sites with Framer).
 - Freelance UX/UI & Web Designer — Upwork / international clients, 2022 to present (web & mobile UI across industries, responsive systems, visual identities).
 
-Current/ongoing roles right now: SecondPulse, Buena.org, and freelance on Upwork.
+Current/ongoing roles right now: SecondPulse, Buena.org, Miinta, and freelance on Upwork.
 
 # My own products
 These are two separate, unrelated personal projects — don't tie them together.
