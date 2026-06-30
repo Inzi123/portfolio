@@ -1345,6 +1345,36 @@
             var reader = resp.body.getReader();
             var decoder = new TextDecoder();
             var full = '';
+            var renderedWords = 0;   // how many word-spans already added
+
+            // Render whatever full text we have so far, appending only the
+            // NEW complete words as animated spans (fade + rise cascade).
+            function renderWords(force) {
+              // split into tokens keeping spaces; only commit "finished" words
+              // (i.e. all but the last token while still streaming).
+              var tokens = full.split(/(\s+)/).filter(function (t) { return t.length; });
+              var commitUpTo = force ? tokens.length : tokens.length - 1;
+              for (var i = renderedWords; i < commitUpTo; i++) {
+                var tok = tokens[i];
+                if (/^\s+$/.test(tok)) {
+                  bubble.appendChild(document.createTextNode(tok));
+                } else {
+                  // strip stray markdown markers (**bold**, _italic_, `code`)
+                  tok = tok.replace(/\*\*|__|`|(^\*|\*$)|(^_|_$)/g, '');
+                  if (!tok) { renderedWords = i + 1; continue; }
+                  var span = document.createElement('span');
+                  span.className = 'chat-word';
+                  span.textContent = tok;
+                  bubble.appendChild(span);
+                  // trigger the transition next frame
+                  requestAnimationFrame(function (s) {
+                    return function () { s.classList.add('is-in'); };
+                  }(span));
+                }
+                renderedWords = i + 1;
+              }
+              scrollToBottom();
+            }
 
             while (true) {
               var chunk = await reader.read();
@@ -1352,14 +1382,15 @@
               var piece = decoder.decode(chunk.value, { stream: true });
               if (!started) { bubble.textContent = ''; started = true; }
               full += piece;
-              bubble.textContent = full;
-              scrollToBottom();
+              renderWords(false);
             }
+            renderWords(true); // commit the final word
 
             if (!full) {
               bubble.textContent = "I didn't catch that — mind rephrasing?";
             } else {
-              history.push({ role: 'assistant', content: full });
+              // store plain text (no markdown markers) in the history
+              history.push({ role: 'assistant', content: full.replace(/\*\*|__|`/g, '') });
             }
           } catch (e) {
             bubble.textContent = "Connection hiccup 😅 Try again, or use the contact form below.";

@@ -1710,16 +1710,17 @@ body::before {
   padding: 20px;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  min-height: 420px;
+  /* Fixed height — the window never grows; the log scrolls inside it. */
+  height: 520px;
 }
 
 .chat-log {
   flex: 1;
+  min-height: 0;          /* allow the flex child to shrink and scroll */
   display: flex;
   flex-direction: column;
   gap: 16px;
   overflow-y: auto;
-  max-height: 46vh;
   padding-right: 4px;
   /* Don't let scrolling inside the log chain to the page. */
   overscroll-behavior: contain;
@@ -1774,6 +1775,19 @@ body::before {
 }
 
 .chat-bubble em { color: #fff; font-style: italic; }
+
+/* Streamed AI reply: each word rises + fades in as it arrives. */
+.chat-word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.5em);
+  transition: opacity 0.35s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.chat-word.is-in {
+  opacity: 1;
+  transform: translateY(0);
+}
 
 /* typing dots while waiting */
 .chat-typing { display: inline-flex; gap: 4px; align-items: center; }
@@ -1862,5 +1876,5 @@ body::before {
 
 @media (max-width: 860px) {
   .chat-section { grid-template-columns: 1fr; gap: 32px; }
-  .chat-log { max-height: 50vh; }
+  .chat-window { height: 460px; }
 }
