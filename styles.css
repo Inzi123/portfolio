@@ -1184,6 +1184,9 @@ body::before {
   margin: 0 auto;
   padding: clamp(48px, 8vh, 90px) var(--content-pad) 28px;
   min-height: 70vh;        /* roomy, but not full-screen */
+  /* Container context so the giant name can size off the footer's OWN width
+     (not the viewport) and always span it without overflowing. */
+  container-type: inline-size;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -1456,7 +1459,9 @@ body::before {
 .footer-name__first,
 .footer-name__last {
   display: inline;                 /* same line */
-  font-size: clamp(6rem, 14.5vw, 18rem);
+  /* Sized off the footer's own width (cqw) so the name spans it edge-to-edge
+     with space-between, never overflowing the limited content column. */
+  font-size: clamp(4rem, 15cqw, 13rem);
   font-weight: 700;                /* both same weight */
   line-height: 1;
 }
