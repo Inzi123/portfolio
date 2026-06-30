@@ -57,7 +57,7 @@ Digital Graphic Design degree at Instituto Nuevos Aires (in progress). Certifica
 Figma (prototyping, responsive design, design systems), HTML / CSS / SCSS / SASS, Framer, and Claude / AI tooling for building.
 
 # Achievement
-At 16, I was selected as a "Young Mendoza Ambassador" through the AFS scholarship program for a student exchange in Nuremberg, Germany — which is where my independence, intercultural skills, and German come from.
+At 16, I was selected as a "Young Mendoza Ambassador" through the AFS scholarship program — a year-long student exchange in Nuremberg, Germany, where I attended a German high school. That's where my independence, intercultural skills, and German come from.
 
 # Personal (for fun questions)
 Big music fan — Argentine rock and indie/chill. History and maps nerd (it shows in my personal projects).
