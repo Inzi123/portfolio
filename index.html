@@ -368,7 +368,7 @@
       </div>
 
       <div class="chat-window" id="chatWindow">
-        <div class="chat-log" id="chatLog" aria-live="polite">
+        <div class="chat-log" id="chatLog" aria-live="polite" data-lenis-prevent>
           <div class="chat-msg chat-msg--ai">
             <span class="chat-avatar" aria-hidden="true">L</span>
             <div class="chat-bubble">
@@ -1324,9 +1324,6 @@
           var ub = addMessage('user');
           ub.textContent = clean;
           history.push({ role: 'user', content: clean });
-
-          // hide suggestions after first send
-          if (suggestions) suggestions.style.display = 'none';
 
           setBusy(true);
           var bubble = typingBubble();

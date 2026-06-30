@@ -1721,6 +1721,8 @@ body::before {
   overflow-y: auto;
   max-height: 46vh;
   padding-right: 4px;
+  /* Don't let scrolling inside the log chain to the page. */
+  overscroll-behavior: contain;
 }
 
 /* Thin scrollbar */
