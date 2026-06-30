@@ -1178,10 +1178,11 @@ body::before {
 /* Footer: no panel background. The name reads huge, with the social
    links stacked below it. */
 .footer-card {
-  max-width: none;
+  /* Match the content width of the other sections (centred, same margins). */
+  max-width: calc(var(--content-max) + 2 * var(--content-pad));
   width: 100%;
-  margin: 0;
-  padding: clamp(48px, 8vh, 90px) clamp(24px, 5vw, 64px) 28px;
+  margin: 0 auto;
+  padding: clamp(48px, 8vh, 90px) var(--content-pad) 28px;
   min-height: 70vh;        /* roomy, but not full-screen */
   display: flex;
   flex-direction: column;
