@@ -33,10 +33,9 @@
          into focus, then the whole overlay fades away (~3s total). -->
     <div class="loader" id="loader">
       <div class="loader__counter" id="loaderCounter" aria-hidden="true">
-        <div class="loader__digit"><div class="loader__reel" data-place="hundreds"></div></div>
-        <div class="loader__digit"><div class="loader__reel" data-place="tens"></div></div>
-        <div class="loader__digit"><div class="loader__reel" data-place="ones"></div></div>
-        <span class="loader__pct">%</span>
+        <span class="loader__digit" data-place="hundreds"></span>
+        <span class="loader__digit" data-place="tens"></span>
+        <span class="loader__digit" data-place="ones">0</span>
       </div>
     </div>
 
@@ -57,6 +56,16 @@
 
     <!-- Animated smoke shader — fixed background behind the whole page -->
     <canvas class="hero-canvas" aria-hidden="true"></canvas>
+
+    <!-- Vertical scroll progress: one thin segment per section, filling as you
+         scroll through it. Hides over the footer. -->
+    <div class="scroll-progress" id="scrollProgress" aria-hidden="true">
+      <span class="scroll-progress__seg" data-section="home"><i></i></span>
+      <span class="scroll-progress__seg" data-section="work-section"><i></i></span>
+      <span class="scroll-progress__seg" data-section="about"><i></i></span>
+      <span class="scroll-progress__seg" data-section="chat"><i></i></span>
+      <span class="scroll-progress__seg" data-section="contact"><i></i></span>
+    </div>
 
     <!-- Custom cursor: outline ring (trails the pointer) + small solid dot
          (tracks instantly). The ring shrinks over links/buttons. -->
@@ -141,7 +150,7 @@
           </div>
 
           <!-- Project cards -->
-          <div class="work-panel work-card">
+          <div class="work-panel work-card work-card--first">
             <span class="work-card__line" aria-hidden="true"></span>
             <div class="work-card__inner">
               <a class="project-visual" href="worldify.html" aria-label="See Worldify project">
@@ -369,7 +378,7 @@
       </div>
 
       <div class="chat-window" id="chatWindow">
-        <div class="chat-log" id="chatLog" aria-live="polite" data-lenis-prevent>
+        <div class="chat-log" id="chatLog" aria-live="polite">
           <div class="chat-msg chat-msg--ai">
             <span class="chat-avatar" aria-hidden="true">L</span>
             <div class="chat-bubble">
@@ -819,7 +828,7 @@
         // know GSAP is running (otherwise the text just shows normally).
         track.classList.add('cascade-ready');
         var textEls = Array.prototype.slice.call(
-          track.querySelectorAll('.work-card .project-meta h2, .work-card .project-desc')
+          track.querySelectorAll('.work-title, .work-subtitle, .work-card .project-meta h2, .work-card .project-desc, .work-cta-title, .work-cta-sub')
         );
         textEls.forEach(function (el) {
           if (el.dataset.split) return;
@@ -861,6 +870,9 @@
             ease: 'none'
           });
 
+          var ctaPanel = track.querySelector('.work-panel--cta');
+          var titlePanel = track.querySelector('.work-panel--title');
+
           st = ScrollTrigger.create({
             trigger: section,
             start: 'top top',
@@ -870,7 +882,16 @@
             scrub: true,          // no lag → track lands exactly at the end
             anticipatePin: 0,     // no pre-shift that causes the release jump
             invalidateOnRefresh: true,
-            animation: tween
+            animation: tween,
+            // The title (first) and CTA (last) panels never cross the viewport,
+            // so reveal them by the pin's own progress: title right away, CTA
+            // near the end.
+            onEnter: function () { if (titlePanel) titlePanel.classList.add('words-in'); },
+            onEnterBack: function () { if (titlePanel) titlePanel.classList.add('words-in'); },
+            onUpdate: function (self) {
+              if (titlePanel) titlePanel.classList.toggle('words-in', self.progress < 0.5);
+              if (ctaPanel) ctaPanel.classList.toggle('words-in', self.progress > 0.8);
+            }
           });
 
           // Each card rises a touch from below as it scrolls into the viewport.
@@ -897,9 +918,15 @@
             if (t.scrollTrigger) cardTriggers.push(t.scrollTrigger);
           });
 
-          // Cascade the card's words in as it scrolls into the centre area.
+          // Cascade the words in for each project card as it scrolls into the
+          // centre. The title (first) and CTA (last) panels never cross the
+          // viewport, so they're revealed via the pin's progress instead.
           cards.forEach(function (card) {
             var workCard = card.closest('.work-card') || card;
+            // skip the first/last panels (handled by pin progress below)
+            if (workCard.classList.contains('work-panel--title') ||
+                workCard.classList.contains('work-panel--cta')) return;
+
             var ct = ScrollTrigger.create({
               trigger: card,
               containerAnimation: tween,
@@ -910,8 +937,6 @@
               onLeave: function () { workCard.classList.remove('words-in'); },
               onLeaveBack: function () { workCard.classList.remove('words-in'); }
             });
-            // Set initial state (a card already in range at load won't fire
-            // onEnter). isActive reflects whether we're between start and end.
             if (ct.isActive) workCard.classList.add('words-in');
             cardTriggers.push(ct);
           });
@@ -923,6 +948,27 @@
         // Rebuild geometry on resize (debounced via ScrollTrigger.refresh).
         window.addEventListener('resize', function () { ScrollTrigger.refresh(); });
       });
+    </script>
+
+    <!-- Worldify divider line: draws itself when the projects section first
+         comes into view (independent of the horizontal scroll). -->
+    <script>
+      (function () {
+        var section = document.getElementById('work-section');
+        var firstCard = section && section.querySelector('.work-card--first');
+        if (!firstCard || !('IntersectionObserver' in window)) {
+          if (firstCard) firstCard.classList.add('line-in');
+          return;
+        }
+        // Mark ready so the draw CSS applies (mirrors .cascade-ready intent).
+        section.classList.add('line-ready');
+        var obs = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            firstCard.classList.toggle('line-in', entry.isIntersecting);
+          });
+        }, { threshold: 0, rootMargin: '-35% 0px -35% 0px' });
+        obs.observe(section);
+      })();
     </script>
 
     <!-- Footer reveal: slides up + fades in when it enters the viewport -->
@@ -985,33 +1031,29 @@
           return;
         }
 
-        var reels = {
+        var digits = {
           hundreds: counter.querySelector('[data-place="hundreds"]'),
           tens:     counter.querySelector('[data-place="tens"]'),
           ones:     counter.querySelector('[data-place="ones"]')
         };
-        // Each reel holds 0..9 (hundreds only needs 0..1).
-        Object.keys(reels).forEach(function (k) {
-          var max = (k === 'hundreds') ? 1 : 9;
-          var html = '';
-          for (var d = 0; d <= max; d++) html += '<span>' + d + '</span>';
-          reels[k].innerHTML = html;
-        });
 
-        var digitH = reels.ones.children[0] ? reels.ones.children[0].offsetHeight : 0;
-        var hundredsBox = reels.hundreds.parentElement;
-        var tensBox = reels.tens.parentElement;
+        // Update each place; only the digit that actually changed does the
+        // fade-swap (floats up + fades, the new digit drops in from below).
+        function setDigit(el, ch) {
+          if (el.textContent === ch) return;       // unchanged → stays still
+          el.textContent = ch;
+          el.classList.remove('is-swap');
+          void el.offsetWidth;                     // reflow to restart anim
+          el.classList.add('is-swap');
+        }
 
         function show(value) {
-          var h = Math.floor(value / 100);
-          var t = Math.floor((value % 100) / 10);
-          var o = value % 10;
-          // Hide leading zeros: hundreds only at 100, tens hidden below 10.
-          hundredsBox.style.display = (value >= 100) ? '' : 'none';
-          tensBox.style.display = (value >= 10) ? '' : 'none';
-          reels.hundreds.style.transform = 'translateY(' + (-h * digitH) + 'px)';
-          reels.tens.style.transform = 'translateY(' + (-t * digitH) + 'px)';
-          reels.ones.style.transform = 'translateY(' + (-o * digitH) + 'px)';
+          var h = value >= 100 ? String(Math.floor(value / 100)) : '';
+          var t = value >= 10 ? String(Math.floor((value % 100) / 10)) : '';
+          var o = String(value % 10);
+          setDigit(digits.hundreds, h);
+          setDigit(digits.tens, t);
+          setDigit(digits.ones, o);
         }
 
         document.body.style.overflow = 'hidden';
@@ -1333,7 +1375,15 @@
         var history = [];
         var busy = false;
 
-        function scrollToBottom() { log.scrollTop = log.scrollHeight; }
+        // Only let the log capture the wheel (data-lenis-prevent) when it
+        // actually has overflow — otherwise scrolling over it gets stuck.
+        function syncScrollLock() {
+          var overflows = log.scrollHeight > log.clientHeight + 2;
+          if (overflows) log.setAttribute('data-lenis-prevent', '');
+          else log.removeAttribute('data-lenis-prevent');
+        }
+
+        function scrollToBottom() { log.scrollTop = log.scrollHeight; syncScrollLock(); }
 
         function addMessage(role) {
           var msg = document.createElement('div');
@@ -1462,6 +1512,98 @@
             });
           });
         }
+      })();
+    </script>
+
+    <!-- Vertical scroll progress: fill each section's segment by how far the
+         viewport centre has travelled through it; hide over the footer. -->
+    <script>
+      (function () {
+        var wrap = document.getElementById('scrollProgress');
+        if (!wrap) return;
+        var segs = Array.prototype.slice.call(wrap.querySelectorAll('.scroll-progress__seg'));
+        var footer = document.querySelector('.footer-card');
+        var ticking = false;
+
+        function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+        // Returns the real scroll height of a section (pin-spacer for the
+        // pinned projects section).
+        function sectionHeight(id) {
+          var el = document.getElementById(id);
+          if (!el) return 0;
+          if (id === 'work-section') {
+            var sp = el.closest('.pin-spacer');
+            if (sp) return sp.offsetHeight;
+          }
+          return el.offsetHeight;
+        }
+
+        // Give each segment a length proportional to its section's height,
+        // spread over a fixed total so the bar stays a reasonable size.
+        function sizeSegments() {
+          var heights = segs.map(function (seg) {
+            return sectionHeight(seg.getAttribute('data-section')) || 1;
+          });
+          var total = heights.reduce(function (a, b) { return a + b; }, 0) || 1;
+          var TOTAL_PX = clamp(window.innerHeight * 0.5, 240, 460);
+          var MIN = 14;
+          segs.forEach(function (seg, i) {
+            var h = Math.max(MIN, Math.round(heights[i] / total * TOTAL_PX));
+            seg.style.height = h + 'px';
+          });
+        }
+
+        function update() {
+          ticking = false;
+          var vh = window.innerHeight;
+          var ref = window.scrollY + vh * 0.5;  // viewport centre in page coords
+
+          var activeIdx = -1;
+
+          segs.forEach(function (seg, i) {
+            var id = seg.getAttribute('data-section');
+            var el = document.getElementById(id);
+            var fill = seg.querySelector('i');
+            if (!el || !fill) { return; }
+
+            // For the pinned projects section, the real scroll range is the
+            // pin-spacer GSAP inserts around it (not the 100vh visual height).
+            var measureEl = el;
+            if (id === 'work-section') {
+              var sp = el.closest('.pin-spacer');
+              if (sp) measureEl = sp;
+            }
+            var rect = measureEl.getBoundingClientRect();
+            var top = rect.top + window.scrollY;
+            var h = measureEl.offsetHeight || 1;
+            var p = clamp((ref - top) / h, 0, 1);
+            fill.style.setProperty('--p', p.toFixed(3));
+            if (p > 0 && p < 1) activeIdx = i;
+          });
+
+          // Mark the active segment (the one currently filling).
+          segs.forEach(function (seg, i) {
+            seg.classList.toggle('is-active', i === activeIdx);
+          });
+
+          // Hide the whole indicator once the footer is in view.
+          if (footer) {
+            var fr = footer.getBoundingClientRect();
+            wrap.classList.toggle('is-hidden', fr.top < vh * 0.85);
+          }
+        }
+
+        function onScroll() {
+          if (!ticking) { ticking = true; requestAnimationFrame(update); }
+        }
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', function () { sizeSegments(); onScroll(); }, { passive: true });
+
+        // Size after layout settles (the pin-spacer exists once GSAP builds).
+        sizeSegments();
+        window.setTimeout(sizeSegments, 1200);   // re-measure after GSAP pins
+        update();
       })();
     </script>
 

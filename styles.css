@@ -26,9 +26,9 @@
   inset: 0;
   z-index: 10000;
   display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
-  padding: clamp(28px, 6vw, 72px);
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   background: #01040a;
   animation: loader-out 0.7s ease 3.5s forwards;
 }
@@ -48,11 +48,11 @@
 /* The counter sits bottom-right; a fixed-height window clips the reel so
    only one number shows at a time. */
 .loader__counter {
-  --digit-h: clamp(4rem, 16vw, 11rem);
+  --digit-h: clamp(1.6rem, 4vw, 2.4rem);
   display: flex;
   align-items: baseline;
-  font-weight: 700;
-  letter-spacing: -0.04em;
+  font-weight: 600;
+  letter-spacing: -0.02em;
   line-height: 1;
   color: #c9c9c9;
   font-size: var(--digit-h);
@@ -60,27 +60,18 @@
   z-index: 1; /* keep digits above the grain layer */
 }
 
-/* Each place value has its own clipping window + reel, so only the digit
-   that changes rolls (like a real odometer). */
+/* Each place is its own digit. Only the digit that changes runs the
+   fade-swap (floats up + fades, new digit drops in from below); the others
+   stay still. */
 .loader__digit {
-  height: var(--digit-h);
-  overflow: hidden;
+  display: inline-block;
+  text-align: center;
 }
 
-.loader__reel {
-  display: flex;
-  flex-direction: column;
-  /* JS sets transform: translateY to roll just this digit. */
-  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform;
-}
+.loader__digit:empty { display: none; }   /* hide leading zeros */
 
-.loader__reel span {
-  height: var(--digit-h);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 1ch;
+.loader__digit.is-swap {
+  animation: letter-swap 0.45s cubic-bezier(0.5, 0, 0.2, 1) both;
 }
 
 .loader__pct {
@@ -332,40 +323,36 @@ body::before {
 
 .nav-links a:hover { opacity: 0.6; }
 
-/* ---------- ROLL/SWAP LINK HOVER ----------
-   Each letter is a clipped column (one line-height tall) holding two stacked
-   copies; on hover the column rolls up so the second copy replaces the first.
-   --lh defines the single-line height used for clipping AND the roll distance,
-   so they always match (avoids the glyph getting cut to blank). */
+/* ---------- LETTER FADE HOVER ----------
+   On hover each letter fades + nudges up briefly, staggered left→right, then
+   settles back — a soft cascade with no clipping. */
 .roll-link {
-  --lh: 1.15em;
   display: inline-flex;
   white-space: pre; /* preserve spaces between letters */
-  line-height: var(--lh);
 }
 
 .roll-char {
   display: inline-block;
-  overflow: hidden;
-  vertical-align: top;
-  height: var(--lh);
 }
 
-.roll-inner {
-  display: block;
-  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-  transition-delay: var(--d, 0s);
-}
+/* the JS builds .roll-inner with two stacked faces; show only the first. */
+.roll-inner { display: inline-block; }
+.roll-face { display: inline-block; }
+.roll-face + .roll-face { display: none; } /* hide the second (roll) copy */
 
-.roll-face {
-  display: block;
-  height: var(--lh);
-  line-height: var(--lh);
-}
-
+/* On hover each letter floats up and fades out, then drops back in from below
+   — staggered by --d, no clipping so it never looks cut. */
 .roll-link:hover .roll-inner,
 .case-back:hover .roll-inner {
-  transform: translateY(calc(-1 * var(--lh)));
+  animation: letter-swap 0.55s cubic-bezier(0.5, 0, 0.2, 1) both;
+  animation-delay: var(--d, 0s);
+}
+
+@keyframes letter-swap {
+  0%   { opacity: 1; transform: translateY(0); }
+  40%  { opacity: 0; transform: translateY(-0.7em); }   /* leaves upward */
+  41%  { opacity: 0; transform: translateY(0.7em); }    /* re-enters from below */
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 .hero-body {
@@ -659,40 +646,29 @@ body::before {
   pointer-events: none;
 }
 
-/* First card's line (Worldify, seen right after the hero): draws itself from
-   top to bottom, with a brighter accent segment sweeping down as it goes. */
-.cascade-ready .work-card:first-of-type .work-card__line {
-  transform: scaleY(0);
-  transform-origin: top center;
-  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.cascade-ready .work-card:first-of-type.words-in .work-card__line {
-  transform: scaleY(1);
-}
-
-/* A glow that travels down the line as it draws. */
-.cascade-ready .work-card:first-of-type .work-card__line::after {
-  content: "";
-  position: absolute;
-  left: -1px;
-  top: 0;
-  width: 3px;
-  height: 22%;
-  background: linear-gradient(to bottom, transparent, rgba(255, 66, 66, 0.9), transparent);
+/* First card's line (Worldify): simply fades in when the projects section
+   enters view. */
+.line-ready .work-card--first .work-card__line {
   opacity: 0;
-  pointer-events: none;
+  transition: opacity 0.8s ease;
 }
 
-.cascade-ready .work-card:first-of-type.words-in .work-card__line::after {
-  animation: line-sweep 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+.line-ready .work-card--first.line-in .work-card__line {
+  opacity: 1;
 }
 
-@keyframes line-sweep {
-  0%   { top: -22%; opacity: 0; }
-  15%  { opacity: 1; }
-  85%  { opacity: 1; }
-  100% { top: 100%; opacity: 0; }
+/* Other cards' + the CTA's dividers fade in with a delay when the panel
+   reaches the centre, so they don't pop in flat. */
+.cascade-ready .work-card:not(.work-card--first) .work-card__line,
+.cascade-ready .work-panel--cta .work-card__line {
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  transition-delay: 0.25s;
+}
+
+.cascade-ready .work-card:not(.work-card--first).words-in .work-card__line,
+.cascade-ready .work-panel--cta.words-in .work-card__line {
+  opacity: 1;
 }
 
 .work-card__inner {
@@ -716,7 +692,25 @@ body::before {
   transition-delay: calc(var(--i, 0) * 0.07s);
 }
 
-.cascade-ready .work-card.words-in .cascade-word {
+.cascade-ready .work-card.words-in .cascade-word,
+.cascade-ready .work-panel--cta.words-in .cascade-word,
+.cascade-ready .work-panel--title.words-in .cascade-word {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Buttons inside a cascading panel (VIEW PROJECT, Get in touch) fade + rise
+   in after the text, so they don't just pop in. */
+.cascade-ready .work-card .project-link,
+.cascade-ready .work-panel--cta .contact-submit {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.5s ease, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: 0.35s;   /* enters a beat after the words */
+}
+
+.cascade-ready .work-card.words-in .project-link,
+.cascade-ready .work-panel--cta.words-in .contact-submit {
   opacity: 1;
   transform: translateY(0);
 }
@@ -1932,4 +1926,49 @@ body::before {
 @media (max-width: 860px) {
   .chat-section { grid-template-columns: 1fr; gap: 32px; }
   .chat-window { height: 460px; }
+}
+
+/* ---------- VERTICAL SCROLL PROGRESS ----------
+   One thin segment per section, fixed to the right edge. The active
+   section's segment fills as you scroll through it. Hidden over the footer. */
+.scroll-progress {
+  position: fixed;
+  top: 50%;
+  right: clamp(16px, 2.5vw, 34px);
+  transform: translateY(-50%);
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.4s ease;
+}
+
+.scroll-progress.is-hidden { opacity: 0; }
+
+.scroll-progress__seg {
+  position: relative;
+  width: 2px;
+  height: 34px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.16);
+  overflow: hidden;
+}
+
+/* the fill grows top→bottom; JS sets scaleY 0..1 */
+.scroll-progress__seg i {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background: #c9c9c9;
+  transform: scaleY(var(--p, 0));
+  transform-origin: top center;
+}
+
+/* active segment gets a brighter fill */
+.scroll-progress__seg.is-active i { background: #fff; }
+
+@media (max-width: 760px) {
+  .scroll-progress { display: none; }   /* skip on phones */
 }
