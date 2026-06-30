@@ -23,6 +23,8 @@
     <!-- GSAP + ScrollTrigger for the pinned horizontal projects carousel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+    <!-- Lenis: global smooth/slow scroll, synced with ScrollTrigger -->
+    <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
   </head>
   <body>
     <!-- ===================== LOADING SCREEN =====================
@@ -55,8 +57,15 @@
     <!-- Animated smoke shader — fixed background behind the whole page -->
     <canvas class="hero-canvas" aria-hidden="true"></canvas>
 
-    <!-- Rotating badge: SCROLL — follows the cursor across the whole page -->
-    <div class="badge badge--scroll" aria-hidden="true">
+    <!-- Custom cursor: outline ring (trails the pointer) + small solid dot
+         (tracks instantly). The ring shrinks over links/buttons. -->
+    <div class="cursor" aria-hidden="true">
+      <span class="cursor__ring"></span>
+      <span class="cursor__dot"></span>
+    </div>
+
+    <!-- (legacy badge markup kept hidden) -->
+    <div class="badge badge--scroll" hidden aria-hidden="true">
       <div class="badge-spin badge-text-fade">
         <svg viewBox="0 0 150 150">
           <defs>
@@ -134,16 +143,16 @@
           <div class="work-panel work-card">
             <span class="work-card__line" aria-hidden="true"></span>
             <div class="work-card__inner">
-              <a class="project-visual" href="https://altruistic-habits-426334.framer.app/secondpulse" aria-label="See SecondPulse project">
-                <img src="https://framerusercontent.com/images/COInmXaJan2gf6XaY9ogYQnfQ0I.png?width=1440&amp;height=854" alt="SecondPulse interface preview" />
+              <a class="project-visual" href="worldify.html" aria-label="See Worldify project">
+                <img src="https://framerusercontent.com/images/COInmXaJan2gf6XaY9ogYQnfQ0I.png?width=1440&amp;height=854" alt="Worldify map editor preview" />
                 <span class="project-cursor" aria-hidden="true">See project</span>
               </a>
               <div class="project-copy-wrap">
                 <div class="project-meta">
-                  <h2>SecondPulse</h2>
-                  <p class="project-desc">Intelligent workspace platform &amp; design system.</p>
+                  <h2>Worldify</h2>
+                  <p class="project-desc">Interactive map editor for building game worlds.</p>
                 </div>
-                <a class="project-link" href="https://altruistic-habits-426334.framer.app/secondpulse">
+                <a class="project-link" href="worldify.html">
                   <span class="project-link__dot" aria-hidden="true">
                     <svg class="project-link__arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
                   </span>
@@ -226,10 +235,12 @@
               <h2 class="work-cta-title">Have a project in mind?</h2>
               <p class="work-cta-sub">Let’s talk about how we can build it together.</p>
               <a class="contact-submit projects-cta-btn" href="#contact">
+                <span class="contact-submit__slot contact-submit__slot--left" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                </span>
                 <span class="contact-submit__text">Get in touch</span>
-                <span class="contact-submit__slot" aria-hidden="true">
-                  <svg class="arrow-out" viewBox="0 0 24 24" fill="none"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                  <svg class="arrow-in" viewBox="0 0 24 24" fill="none"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                <span class="contact-submit__slot contact-submit__slot--right" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
                 </span>
               </a>
             </div>
@@ -343,6 +354,53 @@
         </div>
       </section>
     </main>
+
+    <!-- ===================== AI CHAT ===================== -->
+    <section id="chat" class="chat-section">
+      <div class="chat-intro">
+        <p class="chat-eyebrow">Ask my AI</p>
+        <h2 class="chat-title">Talk to a little<br />AI version of me</h2>
+        <p class="chat-lead">
+          I trained a small AI on my background — it talks like me (minus the
+          typos). Ask it about my work, how I build with AI, or whether I’m free
+          for your project.
+        </p>
+      </div>
+
+      <div class="chat-window" id="chatWindow">
+        <div class="chat-log" id="chatLog" aria-live="polite">
+          <div class="chat-msg chat-msg--ai">
+            <span class="chat-avatar" aria-hidden="true">L</span>
+            <div class="chat-bubble">
+              Hey! I’m Lucas’ little AI 👋 Ask me anything about my work, how I
+              use AI to design <em>and</em> build products, or if I’m around for
+              a project.
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-suggestions" id="chatSuggestions">
+          <button class="chat-chip" type="button">How do you use AI to build?</button>
+          <button class="chat-chip" type="button">What’s Worldify?</button>
+          <button class="chat-chip" type="button">Are you free for a project?</button>
+          <button class="chat-chip" type="button">Tell me something fun</button>
+        </div>
+
+        <form class="chat-form" id="chatForm">
+          <input
+            type="text"
+            id="chatInput"
+            class="chat-input"
+            placeholder="Ask me anything…"
+            autocomplete="off"
+            maxlength="500"
+          />
+          <button type="submit" class="chat-send" aria-label="Send">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          </button>
+        </form>
+      </div>
+    </section>
 
     <!-- ===================== CONTACT FORM ===================== -->
     <section id="contact" class="contact-section">
@@ -573,113 +631,63 @@
       })();
     </script>
 
+    <!-- Custom dot cursor: an outline ring that trails the pointer + a small
+         solid dot that tracks it instantly. The ring shrinks over links. -->
     <script>
       (function () {
         var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        var badge = document.querySelector('.badge--scroll');
-        if (!badge) return;
+        var isTouch = window.matchMedia('(pointer: coarse)').matches;
+        var cursor = document.querySelector('.cursor');
+        var ring = cursor && cursor.querySelector('.cursor__ring');
+        var dot = cursor && cursor.querySelector('.cursor__dot');
+        if (!cursor || !ring || !dot || reduce || isTouch) return;
 
-        var bw = badge.offsetWidth || 120;
-        var bh = badge.offsetHeight || 120;
+        cursor.classList.add('is-active');
 
-        // Scale applied in compact (link-hover) mode — small blurred dot.
-        var COMPACT_SCALE = 0.16;
-
-        // Viewport coordinates — badge is position:fixed, so it follows the
-        // cursor anywhere on the page and its backdrop-filter blurs whatever
-        // section is underneath it.
-        var tx = window.innerWidth * 0.72, ty = window.innerHeight * 0.40;
-        var cx = tx, cy = ty;
-        var scale = 1;            // current (smoothed) scale
-        var targetScale = 1;      // 1 = follow cursor, COMPACT_SCALE = pinned dot
-        var pinned = false;       // true while hovering a nav link
-        var pinX = 0, pinY = 0;   // pinned target center (link corner)
+        // dot = instant target; ring = smoothed trailing position.
+        var mx = window.innerWidth / 2, my = window.innerHeight / 2;
+        var rx = mx, ry = my;
         var raf = null;
 
-        function recalc() {
-          bw = badge.offsetWidth || bw;
-          bh = badge.offsetHeight || bh;
-        }
-        window.addEventListener('resize', recalc);
-
-        function render() {
-          // Horizontally centered on the cursor. When following the cursor the
-          // badge hangs BELOW it (top edge just under the pointer); when pinned
-          // to a link it stays centered on the pin point.
-          var topY = pinned ? (cy - bh / 2) : (cy + 8);
-          badge.style.transform =
-            'translate(' + (cx - bw / 2) + 'px,' + topY + 'px) scale(' + scale + ')';
-        }
-
-        function onMove(e) {
-          if (pinned) return; // ignore cursor while docked to a link
-          tx = e.clientX;
-          ty = e.clientY;
+        window.addEventListener('mousemove', function (e) {
+          mx = e.clientX; my = e.clientY;
+          // dot snaps to the pointer immediately
+          dot.style.transform = 'translate(' + mx + 'px,' + my + 'px) translate(-50%, -50%)';
           if (!raf) raf = requestAnimationFrame(tick);
-        }
+        }, { passive: true });
 
         function tick() {
-          // Choose the active target (cursor or pinned link corner).
-          var gx = pinned ? pinX : tx;
-          var gy = pinned ? pinY : ty;
-
-          cx += (gx - cx) * 0.16;
-          cy += (gy - cy) * 0.16;
-          scale += (targetScale - scale) * 0.18;
-          render();
-
-          var moving =
-            Math.abs(gx - cx) > 0.4 ||
-            Math.abs(gy - cy) > 0.4 ||
-            Math.abs(targetScale - scale) > 0.005;
-
-          if (moving) {
+          rx += (mx - rx) * 0.18;
+          ry += (my - ry) * 0.18;
+          ring.style.transform = 'translate(' + rx + 'px,' + ry + 'px) translate(-50%, -50%)';
+          if (Math.abs(mx - rx) > 0.4 || Math.abs(my - ry) > 0.4) {
             raf = requestAnimationFrame(tick);
           } else {
             raf = null;
           }
         }
 
-        function startAnim() { if (!raf) raf = requestAnimationFrame(tick); }
-
-        // --- Nav link hover: dock to the top-right corner of the link ---
-        // Includes the project VIEW PROJECT link and the footer links so they
-        // behave like the navbar links on hover.
-        var links = document.querySelectorAll('.nav-links a, .project-link, .footer-links a, .contact-submit, .about-visual');
+        // Ring shrinks over interactive elements.
+        var links = document.querySelectorAll(
+          'a, button, .project-link, .contact-submit, .about-visual, .nav-links a'
+        );
         links.forEach(function (link) {
-          link.addEventListener('mouseenter', function () {
-            var r = link.getBoundingClientRect();
-            // Top-right corner of the link, nudged slightly outward/up.
-            pinX = r.right + 6;
-            pinY = r.top - 4;
-            pinned = true;
-            targetScale = COMPACT_SCALE;
-            badge.classList.add('is-compact');
-            startAnim();
-          });
-          link.addEventListener('mouseleave', function () {
-            pinned = false;
-            targetScale = 1;
-            badge.classList.remove('is-compact');
-            startAnim();
-          });
+          link.addEventListener('mouseenter', function () { cursor.classList.add('is-shrink'); });
+          link.addEventListener('mouseleave', function () { cursor.classList.remove('is-shrink'); });
         });
 
-        // Place it at the starting spot immediately.
-        render();
-
-        if (!reduce) {
-          window.addEventListener('mousemove', onMove, { passive: true });
-        }
+        // Hide near screen edges leaving the window.
+        document.addEventListener('mouseleave', function () { cursor.classList.add('is-hidden'); });
+        document.addEventListener('mouseenter', function () { cursor.classList.remove('is-hidden'); });
       })();
     </script>
 
     <!-- "See project" chip follows the cursor inside the project image -->
     <script>
       (function () {
-        // Hide the SCROLL badge while over any image so only the
+        // Hide the dot cursor while over any image so only the
         // "See project" chip shows.
-        var scrollBadge = document.querySelector('.badge--scroll');
+        var scrollBadge = document.querySelector('.cursor');
 
         // Wire up every project image independently, each with its own
         // chip and smoothed cursor-trailing state.
@@ -719,11 +727,11 @@
             chip.style.left = cx + 'px';
             chip.style.top = cy + 'px';
             inside = true;
-            if (scrollBadge) scrollBadge.style.opacity = '0';
+            if (scrollBadge) scrollBadge.classList.add('is-hidden');
           });
           wrap.addEventListener('mouseleave', function () {
             inside = false;
-            if (scrollBadge) scrollBadge.style.opacity = '';
+            if (scrollBadge) scrollBadge.classList.remove('is-hidden');
           });
         });
       })();
@@ -760,6 +768,30 @@
       })();
     </script>
 
+    <!-- Lenis: slow, smooth, uniform scroll across the whole page, driven by
+         GSAP's ticker and synced to ScrollTrigger so the pinned carousel runs
+         at the same rhythm as everything else. -->
+    <script>
+      window.addEventListener('load', function () {
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduce || !window.Lenis || !window.gsap) return;
+
+        var lenis = new Lenis({
+          duration: 1.4,            // higher = slower / more glide
+          smoothWheel: true,
+          wheelMultiplier: 0.9      // lower = slower per wheel notch
+        });
+        window.__lenis = lenis;
+
+        // Keep ScrollTrigger in sync with Lenis' virtual scroll.
+        if (window.ScrollTrigger) {
+          lenis.on('scroll', ScrollTrigger.update);
+        }
+        gsap.ticker.add(function (time) { lenis.raf(time * 1000); });
+        gsap.ticker.lagSmoothing(0);
+      });
+    </script>
+
     <!-- Projects: pinned horizontal carousel via GSAP ScrollTrigger. The
          section pins; the track translates left by its overflow width. -->
     <script>
@@ -790,10 +822,10 @@
           var distance = track.scrollWidth - window.innerWidth;
           if (distance <= 0) return;
 
-          // SCROLL_FACTOR stretches the vertical scroll length relative to the
-          // horizontal travel: >1 means each card lingers longer in place
-          // (more scroll to move the same distance). 1 = 1:1.
-          var SCROLL_FACTOR = 1.8;
+          // Lenis makes the whole page scroll at a uniform slow rhythm, so we
+          // can give the carousel a little extra scroll length to let cards
+          // linger without it feeling faster/slower than the rest.
+          var SCROLL_FACTOR = 1.4;
           var scrollLen = distance * SCROLL_FACTOR;
 
           var tween = gsap.to(track, {
@@ -807,7 +839,8 @@
             end: '+=' + scrollLen,
             pin: true,
             pinSpacing: true,
-            scrub: 1,
+            scrub: true,          // no lag → track lands exactly at the end
+            anticipatePin: 0,     // no pre-shift that causes the release jump
             invalidateOnRefresh: true,
             animation: tween
           });
@@ -1233,6 +1266,124 @@
             });
           }, { threshold: 0.15, rootMargin: '0px 0px -10% 0px' });
           formObs.observe(contactForm);
+        }
+      })();
+    </script>
+
+    <!-- AI chat: streams replies from the /api/chat serverless function. -->
+    <script>
+      (function () {
+        var form = document.getElementById('chatForm');
+        var input = document.getElementById('chatInput');
+        var log = document.getElementById('chatLog');
+        var sendBtn = form && form.querySelector('.chat-send');
+        var suggestions = document.getElementById('chatSuggestions');
+        if (!form || !input || !log) return;
+
+        // Conversation history sent to the API (excludes the greeting).
+        var history = [];
+        var busy = false;
+
+        function scrollToBottom() { log.scrollTop = log.scrollHeight; }
+
+        function addMessage(role) {
+          var msg = document.createElement('div');
+          msg.className = 'chat-msg chat-msg--' + (role === 'user' ? 'user' : 'ai');
+          if (role === 'ai') {
+            var av = document.createElement('span');
+            av.className = 'chat-avatar';
+            av.setAttribute('aria-hidden', 'true');
+            av.textContent = 'L';
+            msg.appendChild(av);
+          }
+          var bubble = document.createElement('div');
+          bubble.className = 'chat-bubble';
+          msg.appendChild(bubble);
+          log.appendChild(msg);
+          scrollToBottom();
+          return bubble;
+        }
+
+        function typingBubble() {
+          var bubble = addMessage('ai');
+          bubble.innerHTML = '<span class="chat-typing"><span></span><span></span><span></span></span>';
+          return bubble;
+        }
+
+        function setBusy(state) {
+          busy = state;
+          if (sendBtn) sendBtn.disabled = state;
+          input.disabled = state;
+        }
+
+        async function send(text) {
+          if (busy || !text.trim()) return;
+          var clean = text.trim();
+
+          // user bubble
+          var ub = addMessage('user');
+          ub.textContent = clean;
+          history.push({ role: 'user', content: clean });
+
+          // hide suggestions after first send
+          if (suggestions) suggestions.style.display = 'none';
+
+          setBusy(true);
+          var bubble = typingBubble();
+          var started = false;
+
+          try {
+            var resp = await fetch('/api/chat', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ messages: history })
+            });
+
+            if (!resp.ok || !resp.body) {
+              bubble.textContent = "Hmm, my brain is offline right now 😅 Try the contact form below and I'll get back to you for real.";
+              setBusy(false);
+              return;
+            }
+
+            var reader = resp.body.getReader();
+            var decoder = new TextDecoder();
+            var full = '';
+
+            while (true) {
+              var chunk = await reader.read();
+              if (chunk.done) break;
+              var piece = decoder.decode(chunk.value, { stream: true });
+              if (!started) { bubble.textContent = ''; started = true; }
+              full += piece;
+              bubble.textContent = full;
+              scrollToBottom();
+            }
+
+            if (!full) {
+              bubble.textContent = "I didn't catch that — mind rephrasing?";
+            } else {
+              history.push({ role: 'assistant', content: full });
+            }
+          } catch (e) {
+            bubble.textContent = "Connection hiccup 😅 Try again, or use the contact form below.";
+          }
+          setBusy(false);
+          input.focus();
+        }
+
+        form.addEventListener('submit', function (e) {
+          e.preventDefault();
+          var text = input.value;
+          input.value = '';
+          send(text);
+        });
+
+        if (suggestions) {
+          suggestions.querySelectorAll('.chat-chip').forEach(function (chip) {
+            chip.addEventListener('click', function () {
+              send(chip.textContent);
+            });
+          });
         }
       })();
     </script>

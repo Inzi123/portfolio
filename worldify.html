@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Worldify — Lucas Inzirillo</title>
+    <meta
+      name="description"
+      content="Worldify — an interactive map editor for building game worlds. A case study by Lucas Inzirillo."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,700,800,900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Page grain filter (same as the home page) -->
+    <svg width="0" height="0" aria-hidden="true" style="position:absolute">
+      <filter id="grain" color-interpolation-filters="sRGB"
+        x="0" y="0" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="4" stitchTiles="stitch" result="n" />
+        <feColorMatrix in="n" type="matrix"
+          values="0 0 0 0 0
+                  0 0 0 0 0
+                  0 0 0 0 0
+                  0 0 0 0.85 0" />
+      </filter>
+    </svg>
+
+    <!-- Animated smoke shader background -->
+    <canvas class="hero-canvas" aria-hidden="true"></canvas>
+
+    <!-- Progressive blur strip behind the fixed navbar -->
+    <div class="nav-blur" aria-hidden="true">
+      <div class="nav-blur__layer"></div>
+      <div class="nav-blur__layer"></div>
+      <div class="nav-blur__layer"></div>
+      <div class="nav-blur__layer"></div>
+      <div class="nav-blur__layer"></div>
+      <div class="nav-blur__layer"></div>
+      <div class="nav-blur__layer"></div>
+      <div class="nav-blur__layer"></div>
+    </div>
+
+    <header class="topbar">
+      <a class="brand" href="index.html">Lucas Inzirillo</a>
+      <nav class="nav-links">
+        <a href="index.html#work">Work</a>
+        <a href="index.html#about">About me</a>
+        <a href="index.html#contact">Contact</a>
+      </nav>
+    </header>
+
+    <main class="case">
+      <!-- Hero -->
+      <section class="case-hero">
+        <a class="case-back" href="index.html#work">
+          <span class="case-back__arrow" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M19 12H6M11 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          </span>
+          <span class="case-back__text">Back</span>
+        </a>
+        <p class="case-eyebrow">Map editor · Tooling · UX/UI</p>
+        <h1 class="case-title">Worldify</h1>
+        <p class="case-lead">
+          An interactive map editor for building and editing game worlds —
+          designed to make level creation fast, visual, and intuitive.
+        </p>
+        <a class="contact-submit case-live" href="https://mapeditor1.netlify.app/editor/map_1775696879254" target="_blank" rel="noopener">
+          <span class="contact-submit__slot contact-submit__slot--left" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          </span>
+          <span class="contact-submit__text">Open live editor</span>
+          <span class="contact-submit__slot contact-submit__slot--right" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          </span>
+        </a>
+      </section>
+
+      <!-- Cover image -->
+      <section class="case-cover">
+        <img src="https://framerusercontent.com/images/COInmXaJan2gf6XaY9ogYQnfQ0I.png?width=1440&amp;height=854" alt="Worldify map editor interface" />
+      </section>
+
+      <!-- Overview -->
+      <section class="case-section">
+        <div class="case-grid">
+          <h2 class="case-h2">Overview</h2>
+          <div class="case-body">
+            <p>
+              Worldify is a browser-based map editor that lets you compose game
+              worlds tile by tile. The goal was a tool that feels immediate —
+              place, paint, and edit without friction — while staying powerful
+              enough for larger maps.
+            </p>
+            <p>
+              I focused on the editing experience: a clear canvas, a tidy tool
+              panel, and interactions that stay out of the way so the map is
+              always the centre of attention.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Meta facts -->
+      <section class="case-section">
+        <div class="case-facts">
+          <div class="case-fact">
+            <span class="case-fact__label">Role</span>
+            <span class="case-fact__value">Design &amp; front-end</span>
+          </div>
+          <div class="case-fact">
+            <span class="case-fact__label">Type</span>
+            <span class="case-fact__value">Web tool</span>
+          </div>
+          <div class="case-fact">
+            <span class="case-fact__label">Year</span>
+            <span class="case-fact__value">2026</span>
+          </div>
+          <div class="case-fact">
+            <span class="case-fact__label">Stack</span>
+            <span class="case-fact__value">HTML · CSS · JS</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- A second image -->
+      <section class="case-cover">
+        <img src="https://framerusercontent.com/images/COInmXaJan2gf6XaY9ogYQnfQ0I.png?width=1440&amp;height=854" alt="Worldify editing a map" />
+      </section>
+
+      <!-- Closing -->
+      <section class="case-section case-closing">
+        <h2 class="case-h2">Try it yourself</h2>
+        <p>Open the live editor and start building a world.</p>
+        <a class="contact-submit case-live" href="https://mapeditor1.netlify.app/editor/map_1775696879254" target="_blank" rel="noopener">
+          <span class="contact-submit__slot contact-submit__slot--left" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          </span>
+          <span class="contact-submit__text">Open live editor</span>
+          <span class="contact-submit__slot contact-submit__slot--right" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          </span>
+        </a>
+      </section>
+    </main>
+
+    <footer class="footer-card">
+      <div class="footer-top">
+        <p class="footer-name"><span class="footer-name__first">Lucas</span> <span class="footer-name__last">Inzirillo</span></p>
+      </div>
+      <div class="footer-links">
+        <a href="https://www.linkedin.com/in/lucas-inzirillo-ux-ui-designer/">Linkedin</a>
+        <a href="https://www.behance.net/inzi123">Behance</a>
+        <a href="mailto:inzirillolucas01@gmail.com">inzirillolucas01@gmail.com</a>
+      </div>
+    </footer>
+
+    <!-- Smoke shader (same config as the home page) -->
+    <script>
+      (function () {
+        var config = {
+          color1: { r: 41, g: 112, b: 255 },
+          color2: { r: 17, g: 30, b: 54 },
+          color3: { r: 0, g: 0, b: 0 },
+          scale: 1.1, type: 'smoke', noise: 0.3, speed: 0.35
+        };
+        var canvas = document.querySelector('.hero-canvas');
+        if (!canvas) return;
+        var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        if (!gl) { canvas.style.display = 'none'; return; }
+        var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var vsSource = 'attribute vec2 a_pos; void main(){ gl_Position = vec4(a_pos, 0.0, 1.0); }';
+        var fsSource = [
+          'precision highp float;',
+          'uniform vec2 u_res; uniform float u_time; uniform float u_scale; uniform float u_noise;',
+          'uniform vec3 u_c1; uniform vec3 u_c2; uniform vec3 u_c3;',
+          'float hash(vec2 p){ p = fract(p*vec2(123.34, 456.21)); p += dot(p, p+45.32); return fract(p.x*p.y); }',
+          'float noise(vec2 p){ vec2 i = floor(p); vec2 f = fract(p);',
+          '  float a = hash(i); float b = hash(i+vec2(1.0,0.0)); float c = hash(i+vec2(0.0,1.0)); float d = hash(i+vec2(1.0,1.0));',
+          '  vec2 u = f*f*(3.0-2.0*f); return mix(a,b,u.x) + (c-a)*u.y*(1.0-u.x) + (d-b)*u.x*u.y; }',
+          'float fbm(vec2 p){ float v = 0.0; float amp = 0.5; for(int i=0;i<3;i++){ v += amp*noise(p); p *= 2.0; amp *= 0.5; } return v; }',
+          'void main(){',
+          '  vec2 uv = gl_FragCoord.xy / u_res.xy; uv.x *= u_res.x / u_res.y;',
+          '  vec2 p = uv * u_scale; float t = u_time;',
+          '  vec2 q = vec2(fbm(p + 0.4*vec2(cos(t*0.6), sin(t*0.5))), fbm(p + vec2(5.2, 1.3) + 0.4*vec2(sin(t*0.45), cos(t*0.55))));',
+          '  vec2 r = vec2(fbm(p + 4.0*q + 0.3*vec2(cos(t*0.4+1.0), sin(t*0.35))), fbm(p + 4.0*q + vec2(8.3, 2.8) + 0.3*vec2(sin(t*0.3), cos(t*0.42))));',
+          '  float f = fbm(p + 4.0*r); f = mix(f, f + u_noise*hash(gl_FragCoord.xy + t), u_noise);',
+          '  vec3 col = mix(u_c2, u_c3, clamp(f*1.4, 0.0, 1.0));',
+          '  col = mix(col, u_c1, clamp(pow(r.x, 1.8)*0.9, 0.0, 1.0));',
+          '  gl_FragColor = vec4(col, 1.0); }'
+        ].join('\n');
+        function compile(type, src){ var s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)){ console.error(gl.getShaderInfoLog(s)); return null; } return s; }
+        var vs = compile(gl.VERTEX_SHADER, vsSource), fs = compile(gl.FRAGMENT_SHADER, fsSource);
+        if (!vs || !fs) { canvas.style.display = 'none'; return; }
+        var prog = gl.createProgram(); gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog); gl.useProgram(prog);
+        var buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
+        var loc = gl.getAttribLocation(prog, 'a_pos'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+        var uRes = gl.getUniformLocation(prog, 'u_res'), uTime = gl.getUniformLocation(prog, 'u_time'),
+            uScale = gl.getUniformLocation(prog, 'u_scale'), uNoise = gl.getUniformLocation(prog, 'u_noise'),
+            uC1 = gl.getUniformLocation(prog, 'u_c1'), uC2 = gl.getUniformLocation(prog, 'u_c2'), uC3 = gl.getUniformLocation(prog, 'u_c3');
+        gl.uniform1f(uScale, config.scale); gl.uniform1f(uNoise, config.noise);
+        gl.uniform3f(uC1, config.color1.r/255, config.color1.g/255, config.color1.b/255);
+        gl.uniform3f(uC2, config.color2.r/255, config.color2.g/255, config.color2.b/255);
+        gl.uniform3f(uC3, config.color3.r/255, config.color3.g/255, config.color3.b/255);
+        function resize(){ var dpr = Math.min(window.devicePixelRatio || 1, 2); var w = canvas.clientWidth, h = canvas.clientHeight;
+          canvas.width = Math.floor(w*dpr); canvas.height = Math.floor(h*dpr); gl.viewport(0,0,canvas.width,canvas.height); gl.uniform2f(uRes, canvas.width, canvas.height); }
+        window.addEventListener('resize', resize); resize();
+        var start = (typeof performance !== 'undefined' && performance.now) ? performance.now() : 0;
+        function frame(now){ var elapsed = (now - start)/1000; gl.uniform1f(uTime, elapsed * config.speed); gl.drawArrays(gl.TRIANGLES, 0, 6); if(!reduceMotion) requestAnimationFrame(frame); }
+        if (reduceMotion){ gl.uniform1f(uTime, 0.0); gl.drawArrays(gl.TRIANGLES, 0, 6); } else { requestAnimationFrame(frame); }
+      })();
+    </script>
+
+    <!-- Roll/swap letter hover on nav links + the Back link (same as home). -->
+    <script>
+      (function () {
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduce) return;
+        var targets = document.querySelectorAll('.nav-links a, .case-back__text');
+
+        targets.forEach(function (el) {
+          var text = el.textContent;
+          el.textContent = '';
+          el.classList.add('roll-link');
+          for (var i = 0; i < text.length; i++) {
+            var ch = text[i];
+            var span = document.createElement('span');
+            span.className = 'roll-char';
+            var glyph = (ch === ' ') ? ' ' : ch;
+            span.style.setProperty('--d', (i * 0.03).toFixed(3) + 's');
+            span.innerHTML =
+              '<span class="roll-inner">' +
+                '<span class="roll-face">' + glyph + '</span>' +
+                '<span class="roll-face">' + glyph + '</span>' +
+              '</span>';
+            el.appendChild(span);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

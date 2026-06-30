@@ -1,0 +1,7 @@
+{
+  "name": "lucas-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Lucas Inzirillo — portfolio with an AI chat (Vercel serverless + Claude)."
+}
