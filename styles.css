@@ -238,7 +238,7 @@ body::before {
   top: 0;
   left: 0;
   right: 0;
-  height: var(--nav-blur-height, 230px);
+  height: var(--nav-blur-height, 190px);
   z-index: 999; /* just under the topbar (1000) so nav text stays crisp */
   pointer-events: none;
 }
