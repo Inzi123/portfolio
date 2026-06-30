@@ -666,6 +666,21 @@ body::before {
   gap: 18px;
 }
 
+/* Card title/description split into words that cascade in (fade + rise) when
+   the card reaches the centre of the carousel (.words-in toggled by GSAP). */
+.cascade-word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.6em);
+  transition: opacity 0.45s ease, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: calc(var(--i, 0) * 0.04s);
+}
+
+.work-card.words-in .cascade-word {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 /* CTA panel */
 .work-cta__inner {
   display: flex;

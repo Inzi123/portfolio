@@ -813,6 +813,30 @@
         var cardTriggers = [];
         var cards = Array.prototype.slice.call(track.querySelectorAll('.work-card__inner'));
 
+        // Split each card's title + description into word spans (once), so the
+        // cascade can run when the card enters the centre.
+        var textEls = Array.prototype.slice.call(
+          track.querySelectorAll('.work-card .project-meta h2, .work-card .project-desc')
+        );
+        textEls.forEach(function (el) {
+          if (el.dataset.split) return;
+          var words = el.textContent.split(/(\s+)/);
+          el.textContent = '';
+          var idx = 0;
+          words.forEach(function (w) {
+            if (/^\s+$/.test(w)) {
+              el.appendChild(document.createTextNode(w));
+            } else if (w.length) {
+              var span = document.createElement('span');
+              span.className = 'cascade-word';
+              span.style.setProperty('--i', idx++);
+              span.textContent = w;
+              el.appendChild(span);
+            }
+          });
+          el.dataset.split = '1';
+        });
+
         function build() {
           if (st) st.kill();
           cardTriggers.forEach(function (t) { t.kill(); });
@@ -868,6 +892,20 @@
               }
             );
             if (t.scrollTrigger) cardTriggers.push(t.scrollTrigger);
+          });
+
+          // Cascade the card's words in/out as it enters/leaves the centre.
+          cards.forEach(function (card) {
+            var ct = ScrollTrigger.create({
+              trigger: card,
+              containerAnimation: tween,
+              start: 'left 75%',     // card is mostly on screen
+              end: 'right 25%',      // until it starts leaving
+              onToggle: function (self) {
+                card.classList.toggle('words-in', self.isActive);
+              }
+            });
+            cardTriggers.push(ct);
           });
         }
 
