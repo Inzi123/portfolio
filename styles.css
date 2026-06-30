@@ -666,17 +666,21 @@ body::before {
   gap: 18px;
 }
 
-/* Card title/description split into words that cascade in (fade + rise) when
-   the card reaches the centre of the carousel (.words-in toggled by GSAP). */
+/* Card title/description split into words. Visible by default (so text never
+   stays hidden if JS/GSAP doesn't run). When the carousel is active, the
+   .cascade-ready flag hides them until the card hits centre (.words-in). */
 .cascade-word {
   display: inline-block;
+}
+
+.cascade-ready .cascade-word {
   opacity: 0;
   transform: translateY(0.6em);
   transition: opacity 0.45s ease, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
   transition-delay: calc(var(--i, 0) * 0.04s);
 }
 
-.work-card.words-in .cascade-word {
+.cascade-ready .work-card.words-in .cascade-word {
   opacity: 1;
   transform: translateY(0);
 }

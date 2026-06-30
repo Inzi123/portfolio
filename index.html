@@ -814,7 +814,10 @@
         var cards = Array.prototype.slice.call(track.querySelectorAll('.work-card__inner'));
 
         // Split each card's title + description into word spans (once), so the
-        // cascade can run when the card enters the centre.
+        // cascade can run when the card enters the centre. The .cascade-ready
+        // flag on the track activates the hidden→reveal CSS only now that we
+        // know GSAP is running (otherwise the text just shows normally).
+        track.classList.add('cascade-ready');
         var textEls = Array.prototype.slice.call(
           track.querySelectorAll('.work-card .project-meta h2, .work-card .project-desc')
         );
@@ -894,19 +897,26 @@
             if (t.scrollTrigger) cardTriggers.push(t.scrollTrigger);
           });
 
-          // Cascade the card's words in/out as it enters/leaves the centre.
+          // Cascade the card's words in as it scrolls into the centre area.
           cards.forEach(function (card) {
+            var workCard = card.closest('.work-card') || card;
             var ct = ScrollTrigger.create({
               trigger: card,
               containerAnimation: tween,
-              start: 'left 75%',     // card is mostly on screen
-              end: 'right 25%',      // until it starts leaving
-              onToggle: function (self) {
-                card.classList.toggle('words-in', self.isActive);
-              }
+              start: 'left 80%',     // card's left edge entering from the right
+              end: 'right 20%',      // until its right edge is leaving left
+              onEnter: function () { workCard.classList.add('words-in'); },
+              onEnterBack: function () { workCard.classList.add('words-in'); },
+              onLeave: function () { workCard.classList.remove('words-in'); },
+              onLeaveBack: function () { workCard.classList.remove('words-in'); }
             });
+            // Set initial state (a card already in range at load won't fire
+            // onEnter). isActive reflects whether we're between start and end.
+            if (ct.isActive) workCard.classList.add('words-in');
             cardTriggers.push(ct);
           });
+
+          ScrollTrigger.refresh();
         }
 
         build();
