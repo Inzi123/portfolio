@@ -229,7 +229,7 @@ body::before {
   top: 0;
   left: 0;
   right: 0;
-  height: var(--nav-blur-height, 190px);
+  height: var(--nav-blur-height, 165px);
   z-index: 999; /* just under the topbar (1000) so nav text stays crisp */
   pointer-events: none;
 }
@@ -270,26 +270,26 @@ body::before {
   mask-image: linear-gradient(to top, rgba(0,0,0,0) 37.5%, #000 50%, #000 62.5%, rgba(0,0,0,0) 75%);
 }
 .nav-blur__layer:nth-child(5) {
-  backdrop-filter: blur(4.25px);
-  -webkit-backdrop-filter: blur(4.25px);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0) 50%, #000 62.5%, #000 75%, rgba(0,0,0,0) 87.5%);
   mask-image: linear-gradient(to top, rgba(0,0,0,0) 50%, #000 62.5%, #000 75%, rgba(0,0,0,0) 87.5%);
 }
 .nav-blur__layer:nth-child(6) {
-  backdrop-filter: blur(8.5px);
-  -webkit-backdrop-filter: blur(8.5px);
+  backdrop-filter: blur(13px);
+  -webkit-backdrop-filter: blur(13px);
   -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0) 62.5%, #000 75%, #000 87.5%, rgba(0,0,0,0) 100%);
   mask-image: linear-gradient(to top, rgba(0,0,0,0) 62.5%, #000 75%, #000 87.5%, rgba(0,0,0,0) 100%);
 }
 .nav-blur__layer:nth-child(7) {
-  backdrop-filter: blur(17px);
-  -webkit-backdrop-filter: blur(17px);
+  backdrop-filter: blur(26px);
+  -webkit-backdrop-filter: blur(26px);
   -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0) 75%, #000 87.5%, #000 100%);
   mask-image: linear-gradient(to top, rgba(0,0,0,0) 75%, #000 87.5%, #000 100%);
 }
 .nav-blur__layer:nth-child(8) {
-  backdrop-filter: blur(34px);
-  -webkit-backdrop-filter: blur(34px);
+  backdrop-filter: blur(50px);
+  -webkit-backdrop-filter: blur(50px);
   -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0) 87.5%, #000 100%);
   mask-image: linear-gradient(to top, rgba(0,0,0,0) 87.5%, #000 100%);
 }
@@ -1178,10 +1178,11 @@ body::before {
 /* Footer: no panel background. The name reads huge, with the social
    links stacked below it. */
 .footer-card {
-  max-width: calc(var(--content-max) + 2 * var(--content-pad));
-  margin: 0 auto;
-  padding: clamp(80px, 14vh, 140px) var(--content-pad);
-  min-height: 100vh;       /* full-screen footer */
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: clamp(48px, 8vh, 90px) clamp(24px, 5vw, 64px) 28px;
+  min-height: 70vh;        /* roomy, but not full-screen */
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -1207,15 +1208,26 @@ body::before {
   align-items: flex-end;
   justify-content: space-between;
   gap: 24px;
+  order: -1;                /* name sits at the TOP of the footer */
 }
 
 .footer-name {
   font-weight: 700;
   margin: 0;
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
   color: var(--text);
   letter-spacing: -0.04em;
   line-height: 0.95;
+  /* Keep the huge name inside the footer horizontally, but NEVER clip the
+     vertical rise of the cascading letters. */
+  overflow-x: clip;
+  overflow-y: visible;
 }
+.footer-name__last { text-align: right; }
 
 @media (max-width: 760px) {
   .footer-top {
@@ -1442,27 +1454,33 @@ body::before {
 
 .footer-name__first,
 .footer-name__last {
-  display: block;
+  display: inline;                 /* same line */
+  font-size: clamp(6rem, 14.5vw, 18rem);
+  font-weight: 700;                /* both same weight */
   line-height: 1;
 }
 
-.footer-name__first { font-size: 65px; font-weight: 500; }
-.footer-name__last { font-size: 82px; }
-
-.footer-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 28px;
+/* Name letters cascade in (fade + rise) when the footer enters view. */
+/* Footer name: per-letter clip mask + rising inner span (GSAP scrub). */
+.name-clip {
+  display: inline-block;
+  vertical-align: bottom;     /* keep baseline steady while inner rises */
+  line-height: 1;
 }
+.name-rise {
+  display: inline-block;
+  will-change: transform, opacity;  /* GPU hint for the scrubbed rise + fade */
+}
+/* Fallback when GSAP / reduced motion isn't available: show name as-is. */
+.footer-card.name-static .name-rise { transform: none !important; }
+
+/* .footer-links is now a .footer-col (vertical) — see .footer-col rule. */
 
 .footer-card a {
-  color: var(--muted);
+  color: #c9c9c9;
   font-size: 20px;
-  opacity: 0.92;
-  transition: opacity 0.2s ease;
+  font-weight: 500;
 }
-
-.footer-card a:hover { opacity: 0.6; }
 
 @media (max-width: 1080px) {
   .content-grid,
@@ -1538,9 +1556,8 @@ body::before {
 
   /* Footer: name scales down so it fits the viewport width. */
   .footer-card { padding: 40px 0 56px; }
-  .footer-name__first { font-size: clamp(2.4rem, 13vw, 3.4rem); }
-  .footer-name__last  { font-size: clamp(3rem, 17vw, 4.6rem); }
-  .footer-links { gap: 18px; }
+  .footer-name__first,
+  .footer-name__last { font-size: clamp(2.6rem, 14vw, 4rem); }
   .footer-card a { font-size: 16px; }
 
   /* Loading counter a touch smaller so the % fits. */
@@ -2033,22 +2050,59 @@ body::before {
   flex-wrap: wrap;
 }
 
-.footer-nav {
+/* Footer link groups: nav column on the left, socials on the right. */
+.footer-cols {
+  width: 100%;
   display: flex;
-  gap: 22px;
-  padding-bottom: 6px;
+  justify-content: space-between;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  /* Reveal the link columns once we reach the bottom of the footer. */
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s ease, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+body.at-footer-end .footer-col {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* stagger the three columns */
+body.at-footer-end .footer-col:nth-child(1) { transition-delay: 0.02s; }
+body.at-footer-end .footer-col:nth-child(2) { transition-delay: 0.06s; }
+body.at-footer-end .footer-col:nth-child(3) { transition-delay: 0.1s; }
+
+/* Info column: small label, email, location + copyright. */
+.footer-info {
+  gap: 8px;
+}
+
+.footer-info__label {
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.78rem;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.footer-info__muted {
+  color: rgba(201, 201, 201, 0.55);
+  font-size: 0.95rem;
 }
 
 .footer-nav a {
   color: #c9c9c9;
   text-decoration: none;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 500;
-  opacity: 0.92;
-  transition: opacity 0.2s ease;
 }
-
-.footer-nav a:hover { opacity: 0.6; }
 
 /* Navbar fades/lifts away once we reach the footer. */
 .topbar,

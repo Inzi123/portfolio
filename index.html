@@ -461,18 +461,24 @@
     </section>
 
     <footer class="footer-card">
-      <div class="footer-top">
-        <p class="footer-name"><span class="footer-name__first">Lucas</span> <span class="footer-name__last">Inzirillo</span></p>
-        <nav class="footer-nav">
+      <div class="footer-cols">
+        <div class="footer-links footer-col">
+          <a href="https://www.linkedin.com/in/lucas-inzirillo-ux-ui-designer/">Linkedin</a>
+          <a href="https://www.behance.net/inzi123">Behance</a>
+        </div>
+        <nav class="footer-nav footer-col">
           <a href="#work">Work</a>
           <a href="#about">About me</a>
           <a href="#contact">Contact</a>
         </nav>
+        <div class="footer-info footer-col">
+          <a href="mailto:inzirillolucas01@gmail.com">inzirillolucas01@gmail.com</a>
+          <span class="footer-info__muted">Mendoza, Argentina</span>
+          <span class="footer-info__muted">© 2026 Lucas Inzirillo</span>
+        </div>
       </div>
-      <div class="footer-links">
-        <a href="https://www.linkedin.com/in/lucas-inzirillo-ux-ui-designer/">Linkedin</a>
-        <a href="https://www.behance.net/inzi123">Behance</a>
-        <a href="mailto:inzirillolucas01@gmail.com">inzirillolucas01@gmail.com</a>
+      <div class="footer-top">
+        <p class="footer-name"><span class="footer-name__first">Lucas</span> <span class="footer-name__last">Inzirillo</span></p>
       </div>
     </footer>
 
@@ -988,6 +994,13 @@
         var footer = document.querySelector('.footer-card');
         if (!footer) return;
 
+        // Split the footer name into letters so they cascade in. "Lucas"
+        // cascades left→right; "Inzirillo" cascades right→left (reversed delay).
+        var firstName = footer.querySelector('.footer-name__first');
+        var lastName = footer.querySelector('.footer-name__last');
+        // (The footer name is split + animated by a separate GSAP scrub
+        //  script below; see "Footer name: cascade tied to scroll".)
+
         var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         if (reduce || !('IntersectionObserver' in window)) {
           footer.classList.add('is-visible');
@@ -1009,8 +1022,12 @@
         function checkFooter() {
           tking = false;
           var fr = footer.getBoundingClientRect();
-          var atFooter = fr.top < window.innerHeight * 0.7;
-          document.body.classList.toggle('at-footer', atFooter);
+          var vh = window.innerHeight;
+          // navbar/form fade once the footer top crosses ~70%
+          document.body.classList.toggle('at-footer', fr.top < vh * 0.7);
+          // link columns reveal only at the very bottom (footer's bottom edge
+          // near the bottom of the viewport — i.e. you've scrolled all the way).
+          document.body.classList.toggle('at-footer-end', fr.bottom <= vh + 4);
         }
         function onFooterScroll() {
           if (!tking) { tking = true; requestAnimationFrame(checkFooter); }
@@ -1019,6 +1036,91 @@
         window.addEventListener('resize', onFooterScroll, { passive: true });
         checkFooter();
       })();
+    </script>
+
+    <!-- Footer name: cascade tied to scroll. Each letter sits in an
+         overflow:hidden mask and rises from below; GSAP ScrollTrigger scrub
+         maps the scroll progress onto a staggered timeline, so the letters
+         cascade up as you reach the footer (and back down if you scroll up). -->
+    <script>
+      window.addEventListener('load', function () {
+        var first = document.querySelector('.footer-name__first');
+        var last = document.querySelector('.footer-name__last');
+        var footer = document.querySelector('.footer-card');
+        var nameEl = document.querySelector('.footer-name');
+        if (!first || !last || !footer || !nameEl) return;
+
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduce || !window.gsap || !window.ScrollTrigger) {
+          // No GSAP / reduced motion: just show the name normally.
+          footer.classList.add('name-static');
+          return;
+        }
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Wrap each character: outer span = clip mask, inner span = the part
+        // that moves. Returns the inner spans in document (left→right) order.
+        function build(part) {
+          var text = part.textContent;
+          part.textContent = '';
+          var inners = [];
+          for (var i = 0; i < text.length; i++) {
+            var outer = document.createElement('span');
+            outer.className = 'name-clip';
+            var inner = document.createElement('span');
+            inner.className = 'name-rise';
+            inner.textContent = text[i];
+            outer.appendChild(inner);
+            part.appendChild(outer);
+            inners.push(inner);
+          }
+          return inners;
+        }
+
+        var lucas = build(first);                 // L u c a s  (left→right)
+        var inzirillo = build(last);              // I n z i r i l l o
+        // Reveal order: Lucas left→right, Inzirillo right→left, interleaved so
+        // the name builds toward both ends at once.
+        var lucasOrder = lucas;                   // L → s
+        var inzirilloOrder = inzirillo.slice().reverse(); // o → I
+        var ordered = [];
+        var maxLen = Math.max(lucasOrder.length, inzirilloOrder.length);
+        for (var i = 0; i < maxLen; i++) {
+          if (lucasOrder[i]) ordered.push(lucasOrder[i]);
+          if (inzirilloOrder[i]) ordered.push(inzirilloOrder[i]);
+        }
+
+        // No mask: each letter rises in WHOLE (never clipped) and fades in.
+        // Start a little below final position and transparent.
+        gsap.set(ordered, { yPercent: 60, opacity: 0 });
+
+        // Build the cascade as a single scrubbed timeline so each WORD can use
+        // its own per-letter pace ("Lucas" slower than "Inzirillo"). The name
+        // sits at the very bottom of the page; drive it from the footer's
+        // height (no pin — the footer's own translateY transform fights GSAP's
+        // position:fixed pin and would shove the name off-screen).
+        var tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: footer,
+            start: 'top bottom',      // footer top enters viewport bottom → 0
+            end: 'bottom bottom',     // footer bottom reaches viewport bottom → 1
+            scrub: true
+          }
+        });
+        // Lucas: slower cascade (bigger gap between letters).
+        tl.to(lucasOrder, {
+          yPercent: 0, opacity: 1, ease: 'power3.out',
+          stagger: { each: 0.12, from: 'start' }
+        }, 0);
+        // Inzirillo: starts together with Lucas, quicker per-letter pace.
+        tl.to(inzirilloOrder, {
+          yPercent: 0, opacity: 1, ease: 'power3.out',
+          stagger: { each: 0.06, from: 'start' }
+        }, 0);
+
+        // Recompute positions once everything (fonts, layout) is final.
+        ScrollTrigger.refresh();
+      });
     </script>
 
     <!-- OPEN TO WORK badge: slides in from the left each time the hero
@@ -1188,7 +1290,7 @@
       (function () {
         var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         if (reduce) return;
-        var targets = document.querySelectorAll('.nav-links a, .footer-links a');
+        var targets = document.querySelectorAll('.nav-links a, .footer-links a, .footer-nav a');
 
         targets.forEach(function (el) {
           var text = el.textContent;
@@ -1302,7 +1404,6 @@
           '.stack-list strong', '.stack-list span',
           '.work-panel--title .work-title',
           '.work-panel--title .work-subtitle',
-          '.footer-name__first', '.footer-name__last',
           '.contact-eyebrow', '.contact-title'
         ].join(', ');
         var blocks = Array.prototype.slice.call(document.querySelectorAll(SELECTOR));
@@ -1654,8 +1755,9 @@
           }
 
           // Hide the whole vertical indicator over the footer OR while in the
-          // projects section (the bars take over there).
-          var hideVert = inProjects;
+          // projects section (the bars take over there). Bring it back a touch
+          // before the horizontal scroll fully ends so it doesn't pop in late.
+          var hideVert = inProjects && projProg < 0.91;
           if (footer) {
             var fr = footer.getBoundingClientRect();
             if (fr.top < vh * 0.85) hideVert = true;
