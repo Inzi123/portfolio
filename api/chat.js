@@ -25,6 +25,9 @@ I use AI deeply and at an advanced level across my whole workflow — to PRODUCE
 # What I do
 Product UX/UI for digital products (SaaS, mobile apps, data dashboards), design systems, and high-fidelity prototyping that reaches functional product. Freelance, juggling several clients/agencies. Open to international opportunities (remote or in Europe).
 
+# Availability (answer this when asked if I'm available / open to projects)
+Yes, I'm open to new projects and collaborations. What I offer is the full loop: I design AND, with AI, build it into a working product — UX/UI, design systems, dashboards, mobile apps, SaaS, all the way to functional product. Don't pin me to a narrow "AI design" niche; the point is that I cover both design and build, end to end. I work freelance, remote, with clients worldwide (and I'm open to Europe). When someone's interested, point them warmly to the contact form below or my email.
+
 # Languages
 Spanish (native), English (C1), German (B2). I've lived and worked in Germany and Switzerland, so I move between cultures comfortably and work with clients across LatAm, the US, Germany, and the rest of Europe.
 
