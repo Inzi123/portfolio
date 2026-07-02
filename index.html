@@ -32,10 +32,14 @@
          Full-screen intro: the name starts heavily blurred and resolves
          into focus, then the whole overlay fades away (~3s total). -->
     <div class="loader" id="loader">
+      <!-- Curtain halves: they cover the screen (slight centre overlap) and
+           part outward on exit, inner-top corners curving as they go. -->
+      <span class="loader__half loader__half--l" aria-hidden="true"></span>
+      <span class="loader__half loader__half--r" aria-hidden="true"></span>
       <div class="loader__counter" id="loaderCounter" aria-hidden="true">
-        <span class="loader__digit" data-place="hundreds"></span>
-        <span class="loader__digit" data-place="tens"></span>
-        <span class="loader__digit" data-place="ones">0</span>
+        <span class="loader__place" data-place="hundreds"></span>
+        <span class="loader__place" data-place="tens"></span>
+        <span class="loader__place is-on" data-place="ones">0</span>
       </div>
     </div>
 
@@ -54,19 +58,52 @@
       </filter>
     </svg>
 
-    <!-- Animated smoke shader — fixed background behind the whole page -->
-    <canvas class="hero-canvas" aria-hidden="true"></canvas>
+    <!-- Solid backdrops that crossfade in over Projects + About. Two layers
+         so each gets its own color: Projects underneath, About fades in on
+         top as you cross between them. -->
+    <div class="section-bg section-bg--projects" aria-hidden="true"></div>
+    <div class="section-bg section-bg--about" aria-hidden="true"></div>
+
+    <!-- Cursor glow: a faint red halo on the background that trails the
+         pointer (JS lerps its transform). Same stacking level as the
+         section backdrops but later in the DOM, so it paints above them
+         and still under all content. -->
+    <div class="bg-glow" aria-hidden="true"></div>
 
     <!-- Vertical scroll progress: one thin segment per section, filling as you
-         scroll through it. Hides over the footer (and in the projects section,
-         where the bars visualiser below takes over). -->
-    <div class="scroll-progress" id="scrollProgress" aria-hidden="true">
+         scroll through it. Every segment is clickable (jumps to its section)
+         and shows its name on hover. Inside Projects the middle slot expands
+         into one marker per project — click to jump, hover for the name.
+         Hides over the footer. -->
+    <div class="scroll-progress" id="scrollProgress">
+      <span class="scroll-progress__seg" data-section="home" data-label="Home"><i></i></span>
+      <span class="scroll-progress__group" data-section="selected-work">
+        <span class="scroll-progress__seg" data-proj="0"><i></i></span>
+        <span class="scroll-progress__seg" data-proj="1"><i></i></span>
+        <span class="scroll-progress__seg" data-proj="2"><i></i></span>
+        <span class="scroll-progress__seg" data-proj="3"><i></i></span>
+      </span>
+      <span class="scroll-progress__seg" data-section="about" data-label="About"><i></i></span>
+      <span class="scroll-progress__seg" data-section="contact" data-label="Contact"><i></i></span>
+    </div>
+    <!-- Exact duplicate, stacked on top, with blend mode OFF. Its opacity is
+         faded in/out by JS as the CTA card's photo passes behind the bar, so
+         the colour eases into its plain fixed shade instead of snapping.
+         Must mirror the base bar's structure so the two stay aligned. -->
+    <div class="scroll-progress scroll-progress--solid" id="scrollProgressSolid" aria-hidden="true">
       <span class="scroll-progress__seg" data-section="home"><i></i></span>
-      <span class="scroll-progress__seg" data-section="work-section"><i></i></span>
+      <span class="scroll-progress__group" data-section="selected-work">
+        <span class="scroll-progress__seg" data-proj="0"><i></i></span>
+        <span class="scroll-progress__seg" data-proj="1"><i></i></span>
+        <span class="scroll-progress__seg" data-proj="2"><i></i></span>
+        <span class="scroll-progress__seg" data-proj="3"><i></i></span>
+      </span>
       <span class="scroll-progress__seg" data-section="about"><i></i></span>
-      <span class="scroll-progress__seg" data-section="chat"><i></i></span>
       <span class="scroll-progress__seg" data-section="contact"><i></i></span>
     </div>
+    <!-- Shared hover label for the progress bar (separate element so it isn't
+         affected by the bar's mix-blend-mode). Positioned by JS. -->
+    <div class="progress-tip" id="progressTip" aria-hidden="true"></div>
 
     <!-- Volume-style bars across the top: visible only during the horizontal
          projects scroll; bars grow + turn white left→right with progress.
@@ -119,8 +156,21 @@
         </nav>
       </header>
 
+      <!-- Soft red glow orbs behind the headline. Pre-blurred radial
+           gradients (no filter: blur) so they cost nothing to scroll.
+           Direct child of .hero (NOT the content column) so their light
+           spans the full viewport width instead of clipping at the
+           column's edges. -->
+      <div class="hero-glows" aria-hidden="true">
+        <span class="hero-glow hero-glow--1"></span>
+        <span class="hero-glow hero-glow--2"></span>
+        <span class="hero-glow hero-glow--3"></span>
+      </div>
+
+      <div class="hero-inner">
       <div class="hero-body">
-        <h1 class="hero-title">UX / UI Designer &amp;<br />Design Systems<br />Specialist</h1>
+        <h1 class="hero-title">Lucas<br />Inzirillo</h1>
+        <p class="hero-subtitle">Product Designer</p>
       </div>
 
       <p class="hero-intro">
@@ -129,141 +179,96 @@
         I love building clean and thoughtful interfaces
       </p>
 
-      <!-- Rotating badge: OPEN TO WORK. Outer wrapper slides in; inner spins. -->
-      <div class="badge badge--open" aria-hidden="true">
-        <div class="badge--open__spin">
-          <svg viewBox="0 0 150 150">
-            <defs>
-              <path id="circleOpen" d="M75,75 m-58,0 a58,58 0 1,1 116,0 a58,58 0 1,1 -116,0" />
-            </defs>
-            <text>
-              <textPath href="#circleOpen">OPEN TO WORK • OPEN TO WORK • OPEN TO WORK •</textPath>
-            </text>
+      </div>
+    </section>
+
+    <!-- SELECTED PROJECTS: a tall scroll runway with a sticky stage. It
+         opens as "Selected ⬮ Projects" with the cream blob between the
+         words; scrolling melts the words outward (the blob stays put) and
+         brings the projects in as pairs — one card each side of the blob:
+         pair 1 = (01)(02), pair 2 = (03)(04). JS flags the section with
+         sw--words / sw--p1 / sw--p2 and CSS transitions do the rest. -->
+    <section id="selected-work" class="sw--words" aria-label="Selected projects">
+      <div class="sw-sticky">
+        <h2 class="sw-title">
+          <span class="sw-word sw-word--left">Selected</span>
+          <span class="sw-word sw-word--right">Projects<span class="sw-dot" aria-hidden="true"></span></span>
+        </h2>
+
+        <!-- Four-point star (Frame.svg), inlined so it takes the accent fill. -->
+        <div class="sw-blob" aria-hidden="true">
+          <svg viewBox="0 0 200 200">
+            <path d="M100 200C97.1048 105.262 94.738 102.91 0 100C94.738 97.1048 97.0903 94.738 100 0C102.895 94.738 105.262 97.0903 200 100C105.262 102.91 102.91 105.233 100 200Z" />
           </svg>
+        </div>
+
+        <div class="sw-pair sw-pair--1">
+          <div class="sw-project" data-title="Worldify">
+            <a class="project-visual" href="worldify.html" aria-label="See Worldify project" style="--img: url('https://framerusercontent.com/images/COInmXaJan2gf6XaY9ogYQnfQ0I.png?width=720&amp;height=427')">
+              <img loading="lazy" decoding="async" src="https://framerusercontent.com/images/COInmXaJan2gf6XaY9ogYQnfQ0I.png?width=720&amp;height=427" alt="Worldify map editor preview" />
+              <span class="project-cursor" aria-hidden="true">See project</span>
+            </a>
+            <p class="sw-project__meta"><span class="sw-project__name">Worldify</span><span class="sw-project__num">(01)</span></p>
+            <a class="card-cta sw-project__cta" href="worldify.html">View project →</a>
+          </div>
+          <div class="sw-project" data-title="SecondPulse">
+            <a class="project-visual" href="https://altruistic-habits-426334.framer.app/secondpulse" aria-label="See SecondPulse project" style="--img: url('https://framerusercontent.com/images/COInmXaJan2gf6XaY9ogYQnfQ0I.png?width=720&amp;height=427')">
+              <img loading="lazy" decoding="async" src="https://framerusercontent.com/images/COInmXaJan2gf6XaY9ogYQnfQ0I.png?width=720&amp;height=427" alt="SecondPulse interface preview" />
+              <span class="project-cursor" aria-hidden="true">See project</span>
+            </a>
+            <p class="sw-project__meta"><span class="sw-project__name">SecondPulse</span><span class="sw-project__num">(02)</span></p>
+            <a class="card-cta sw-project__cta" href="https://altruistic-habits-426334.framer.app/secondpulse">View project →</a>
+          </div>
+        </div>
+
+        <div class="sw-pair sw-pair--2">
+          <div class="sw-project" data-title="SecondPulse">
+            <a class="project-visual" href="https://altruistic-habits-426334.framer.app/secondpulse" aria-label="See SecondPulse project" style="--img: url('https://framerusercontent.com/images/COInmXaJan2gf6XaY9ogYQnfQ0I.png?width=720&amp;height=427')">
+              <img loading="lazy" decoding="async" src="https://framerusercontent.com/images/COInmXaJan2gf6XaY9ogYQnfQ0I.png?width=720&amp;height=427" alt="SecondPulse interface preview" />
+              <span class="project-cursor" aria-hidden="true">See project</span>
+            </a>
+            <p class="sw-project__meta"><span class="sw-project__name">SecondPulse</span><span class="sw-project__num">(03)</span></p>
+            <a class="card-cta sw-project__cta" href="https://altruistic-habits-426334.framer.app/secondpulse">View project →</a>
+          </div>
+          <div class="sw-project" data-title="SecondPulse">
+            <a class="project-visual" href="https://altruistic-habits-426334.framer.app/secondpulse" aria-label="See SecondPulse project" style="--img: url('https://framerusercontent.com/images/COInmXaJan2gf6XaY9ogYQnfQ0I.png?width=720&amp;height=427')">
+              <img loading="lazy" decoding="async" src="https://framerusercontent.com/images/COInmXaJan2gf6XaY9ogYQnfQ0I.png?width=720&amp;height=427" alt="SecondPulse interface preview" />
+              <span class="project-cursor" aria-hidden="true">See project</span>
+            </a>
+            <p class="sw-project__meta"><span class="sw-project__name">SecondPulse</span><span class="sw-project__num">(04)</span></p>
+            <a class="card-cta sw-project__cta" href="https://altruistic-habits-426334.framer.app/secondpulse">View project →</a>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- Featured work — horizontal pinned carousel (GSAP). Sits OUTSIDE the
-         padded page-shell so ScrollTrigger can pin it cleanly (no jump). -->
-    <section id="work-section" aria-label="Selected work">
-        <div class="work-track" id="workTrack">
+    <!-- CTA — full-screen card ("Have a project in mind?"). -->
+    <section id="work-section" aria-label="Contact call to action">
 
-          <!-- Title panel -->
-          <div class="work-panel work-panel--title">
-            <h2 class="work-title">My selected projects</h2>
-            <p class="work-subtitle">A few products I’ve designed and shipped, from design systems to full interfaces.</p>
+      <!-- CTA — the final full-screen card in the stack. -->
+      <article class="stacking-card stacking-card--cta" id="proj-cta">
+        <!-- The CTA's own copy of the cursor halo: the page-wide .bg-glow
+             sits at z -1 and this card's photo is opaque, so the same JS
+             mirrors the halo in here (clipped to the card). -->
+        <span class="cta-glow" aria-hidden="true"></span>
+        <div class="card-inner card-inner--cta">
+          <div class="work-cta__inner">
+            <h2 class="work-cta-title">Have a project in mind?</h2>
+            <p class="work-cta-sub">Let’s talk about how we can build it together.</p>
+            <a class="contact-submit projects-cta-btn" href="#contact">
+              <span class="contact-submit__slot contact-submit__slot--left" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              </span>
+              <span class="contact-submit__text">Get in touch</span>
+              <span class="contact-submit__slot contact-submit__slot--right" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              </span>
+            </a>
           </div>
-
-          <!-- Project cards -->
-          <div class="work-panel work-card work-card--first">
-            <span class="work-card__line" aria-hidden="true"></span>
-            <div class="work-card__inner">
-              <a class="project-visual" href="worldify.html" aria-label="See Worldify project">
-                <img src="https://framerusercontent.com/images/COInmXaJan2gf6XaY9ogYQnfQ0I.png?width=1440&amp;height=854" alt="Worldify map editor preview" />
-                <span class="project-cursor" aria-hidden="true">See project</span>
-              </a>
-              <div class="project-copy-wrap">
-                <div class="project-meta">
-                  <h2>Worldify</h2>
-                  <p class="project-desc">Interactive map editor for building game worlds.</p>
-                </div>
-                <a class="project-link" href="worldify.html">
-                  <span class="project-link__dot" aria-hidden="true">
-                    <svg class="project-link__arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                  </span>
-                  <span class="project-link__text">VIEW PROJECT</span>
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <div class="work-panel work-card">
-            <span class="work-card__line" aria-hidden="true"></span>
-            <div class="work-card__inner">
-              <a class="project-visual" href="https://altruistic-habits-426334.framer.app/secondpulse" aria-label="See SecondPulse project">
-                <img src="https://framerusercontent.com/images/COInmXaJan2gf6XaY9ogYQnfQ0I.png?width=1440&amp;height=854" alt="SecondPulse interface preview" />
-                <span class="project-cursor" aria-hidden="true">See project</span>
-              </a>
-              <div class="project-copy-wrap">
-                <div class="project-meta">
-                  <h2>SecondPulse</h2>
-                  <p class="project-desc">Intelligent workspace platform &amp; design system.</p>
-                </div>
-                <a class="project-link" href="https://altruistic-habits-426334.framer.app/secondpulse">
-                  <span class="project-link__dot" aria-hidden="true">
-                    <svg class="project-link__arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                  </span>
-                  <span class="project-link__text">VIEW PROJECT</span>
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <div class="work-panel work-card">
-            <span class="work-card__line" aria-hidden="true"></span>
-            <div class="work-card__inner">
-              <a class="project-visual" href="https://altruistic-habits-426334.framer.app/secondpulse" aria-label="See SecondPulse project">
-                <img src="https://framerusercontent.com/images/COInmXaJan2gf6XaY9ogYQnfQ0I.png?width=1440&amp;height=854" alt="SecondPulse interface preview" />
-                <span class="project-cursor" aria-hidden="true">See project</span>
-              </a>
-              <div class="project-copy-wrap">
-                <div class="project-meta">
-                  <h2>SecondPulse</h2>
-                  <p class="project-desc">Intelligent workspace platform &amp; design system.</p>
-                </div>
-                <a class="project-link" href="https://altruistic-habits-426334.framer.app/secondpulse">
-                  <span class="project-link__dot" aria-hidden="true">
-                    <svg class="project-link__arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                  </span>
-                  <span class="project-link__text">VIEW PROJECT</span>
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <div class="work-panel work-card">
-            <span class="work-card__line" aria-hidden="true"></span>
-            <div class="work-card__inner">
-              <a class="project-visual" href="https://altruistic-habits-426334.framer.app/secondpulse" aria-label="See SecondPulse project">
-                <img src="https://framerusercontent.com/images/COInmXaJan2gf6XaY9ogYQnfQ0I.png?width=1440&amp;height=854" alt="SecondPulse interface preview" />
-                <span class="project-cursor" aria-hidden="true">See project</span>
-              </a>
-              <div class="project-copy-wrap">
-                <div class="project-meta">
-                  <h2>SecondPulse</h2>
-                  <p class="project-desc">Intelligent workspace platform &amp; design system.</p>
-                </div>
-                <a class="project-link" href="https://altruistic-habits-426334.framer.app/secondpulse">
-                  <span class="project-link__dot" aria-hidden="true">
-                    <svg class="project-link__arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                  </span>
-                  <span class="project-link__text">VIEW PROJECT</span>
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <!-- CTA panel -->
-          <div class="work-panel work-panel--cta">
-            <span class="work-card__line" aria-hidden="true"></span>
-            <div class="work-cta__inner">
-              <h2 class="work-cta-title">Have a project in mind?</h2>
-              <p class="work-cta-sub">Let’s talk about how we can build it together.</p>
-              <a class="contact-submit projects-cta-btn" href="#contact">
-                <span class="contact-submit__slot contact-submit__slot--left" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                </span>
-                <span class="contact-submit__text">Get in touch</span>
-                <span class="contact-submit__slot contact-submit__slot--right" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                </span>
-              </a>
-            </div>
-          </div>
-
         </div>
-      </section>
+      </article>
+
+    </section>
 
     <!-- ===================== CONTENT ===================== -->
     <main class="page-shell">
@@ -271,13 +276,29 @@
         <div class="content-grid">
           <!-- About -->
           <section id="about" class="about-card">
-            <div class="about-visual">
-              <img
-                src="profile.png"
-                alt="Lucas Inzirillo"
-              />
+            <!-- Floating photos of me, distributed down the whole About section
+                 and each parallaxing at a different scroll speed (data-speed).
+                 Web-sized copies live in photos/ (originals in photos/original). -->
+            <div class="about-floats" aria-hidden="true">
+              <figure class="about-float about-float--1" data-speed="0.14" style="--rot: -5deg;">
+                <img src="profile.jpg" alt="" loading="lazy" decoding="async" />
+              </figure>
+              <figure class="about-float about-float--2" data-speed="0.08" style="--rot: 4deg;">
+                <img src="photos/lucas-snow.jpg" alt="" loading="lazy" decoding="async" />
+              </figure>
+              <figure class="about-float about-float--3" data-speed="0.18" style="--rot: -3deg;">
+                <img src="photos/lucas-forest.jpg" alt="" loading="lazy" decoding="async" />
+              </figure>
+              <figure class="about-float about-float--4" data-speed="-0.10" style="--rot: 6deg;">
+                <img src="photos/lucas-mountain.jpg" alt="" loading="lazy" decoding="async" />
+              </figure>
+              <figure class="about-float about-float--5" data-speed="0.12" style="--rot: -6deg;">
+                <img src="photos/lucas-studio.jpg" alt="" loading="lazy" decoding="async" />
+              </figure>
             </div>
-            <div class="about-text">
+
+            <div class="about-intro">
+              <div class="about-text">
               <p>
                 I’m an Argentinian–Italian UX/UI Designer with over three years of
                 experience, focused on building scalable design systems and intuitive
@@ -298,9 +319,11 @@
                 challenges that connect creativity, technology, and purpose.
               </p>
 
-              <!-- Info grid: flows below the About text, scrolling past the
-                   sticky image. -->
-              <section class="info-grid">
+              </div>
+            </div>
+
+            <!-- Info grid: sits below the centred About intro. -->
+            <section class="info-grid">
         <article class="panel">
           <h3>Education</h3>
           <ul>
@@ -365,58 +388,10 @@
           </div>
         </article>
               </section>
-            </div>
           </section>
         </div>
       </section>
     </main>
-
-    <!-- ===================== AI CHAT ===================== -->
-    <section id="chat" class="chat-section">
-      <div class="chat-intro">
-        <p class="chat-eyebrow">Ask my AI</p>
-        <h2 class="chat-title">Talk to a little<br />AI version of me</h2>
-        <p class="chat-lead">
-          I trained a small AI on my background — it talks like me (minus the
-          typos). Ask it about my work, how I build with AI, or whether I’m free
-          for your project.
-        </p>
-      </div>
-
-      <div class="chat-window" id="chatWindow">
-        <div class="chat-log" id="chatLog" aria-live="polite">
-          <div class="chat-msg chat-msg--ai">
-            <span class="chat-avatar" aria-hidden="true">L</span>
-            <div class="chat-bubble">
-              Hey! I’m Lucas’ little AI 👋 Ask me anything about my work, how I
-              use AI to design <em>and</em> build products, or if I’m around for
-              a project.
-            </div>
-          </div>
-        </div>
-
-        <div class="chat-suggestions" id="chatSuggestions">
-          <button class="chat-chip" type="button">How do you use AI to build?</button>
-          <button class="chat-chip" type="button">What’s Worldify?</button>
-          <button class="chat-chip" type="button">Are you free for a project?</button>
-          <button class="chat-chip" type="button">Tell me something fun</button>
-        </div>
-
-        <form class="chat-form" id="chatForm">
-          <input
-            type="text"
-            id="chatInput"
-            class="chat-input"
-            placeholder="Ask me anything…"
-            autocomplete="off"
-            maxlength="500"
-          />
-          <button type="submit" class="chat-send" aria-label="Send">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
-          </button>
-        </form>
-      </div>
-    </section>
 
     <!-- ===================== CONTACT FORM ===================== -->
     <section id="contact" class="contact-section">
@@ -460,11 +435,21 @@
       </div>
     </section>
 
+    <!-- Footer reveal: .footer-reveal is a clipping window the height of
+         the footer. Scrubbed to the scroll, the footer content EMERGES from
+         below at a fraction of the scroll speed (as if it lived behind the
+         page), while a dark trapezoid curtain lifts away above it and a
+         uniform shadow over the content clears — it surfaces out of the
+         dark, entirely tied to the user's scroll. Without GSAP / with
+         reduced motion the footer just scrolls in normally (overlays stay
+         hidden). -->
+    <div class="footer-reveal">
     <footer class="footer-card">
       <div class="footer-cols">
         <div class="footer-links footer-col">
           <a href="https://www.linkedin.com/in/lucas-inzirillo-ux-ui-designer/">Linkedin</a>
           <a href="https://www.behance.net/inzi123">Behance</a>
+          <a href="https://www.upwork.com/freelancers/~inzi123">Upwork</a>
         </div>
         <nav class="footer-nav footer-col">
           <a href="#work">Work</a>
@@ -481,180 +466,119 @@
         <p class="footer-name"><span class="footer-name__first">Lucas</span> <span class="footer-name__last">Inzirillo</span></p>
       </div>
     </footer>
+    <!-- Reveal overlay (armed by the script): a uniform shadow that clears
+         as the footer emerges. -->
+    <div class="footer-shade" aria-hidden="true"></div>
+    </div>
 
-    <!-- Animated smoke/noise shader background -->
+    <!-- Solid section backdrops: Projects' slate underneath, About's plum
+         fading in on top as you cross between them. Outside that zone (hero,
+         contact) the flat --bg base shows. The old animated smoke shader is
+         gone — this keeps only its backdrop crossfade. -->
     <script>
       (function () {
-        var config = {
-          color1: { r: 41, g: 112, b: 255 },
-          color2: { r: 17, g: 30, b: 54 },
-          color3: { r: 0, g: 0, b: 0 },
-          scale: 1.1,
-          type: 'smoke',
-          noise: 0.3,
-          speed: 0.35
-        };
+        var homeEl = document.getElementById('home');
+        var contactEl = document.getElementById('contact');
+        var workEl = document.getElementById('work'); // the About section
+        var bgProjects = document.querySelector('.section-bg--projects');
+        var bgAbout = document.querySelector('.section-bg--about');
+        if (!homeEl || !contactEl || (!bgProjects && !bgAbout)) return;
 
-        var canvas = document.querySelector('.hero-canvas');
-        if (!canvas) return;
-        var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-        if (!gl) { canvas.style.display = 'none'; return; } // CSS fallback shows
-
-        var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-        var vsSource =
-          'attribute vec2 a_pos;' +
-          'void main(){ gl_Position = vec4(a_pos, 0.0, 1.0); }';
-
-        var fsSource = [
-          'precision highp float;',
-          'uniform vec2 u_res;',
-          'uniform float u_time;',
-          'uniform float u_scale;',
-          'uniform float u_noise;',
-          'uniform vec2 u_mouse;', // normalized cursor (aspect-corrected uv space)
-          'uniform vec3 u_c1;',
-          'uniform vec3 u_c2;',
-          'uniform vec3 u_c3;',
-          // hash + value noise
-          'float hash(vec2 p){ p = fract(p*vec2(123.34, 456.21)); p += dot(p, p+45.32); return fract(p.x*p.y); }',
-          'float noise(vec2 p){',
-          '  vec2 i = floor(p); vec2 f = fract(p);',
-          '  float a = hash(i);',
-          '  float b = hash(i+vec2(1.0,0.0));',
-          '  float c = hash(i+vec2(0.0,1.0));',
-          '  float d = hash(i+vec2(1.0,1.0));',
-          '  vec2 u = f*f*(3.0-2.0*f);',
-          '  return mix(a,b,u.x) + (c-a)*u.y*(1.0-u.x) + (d-b)*u.x*u.y;',
-          '}',
-          // fractal brownian motion -> smoke
-          'float fbm(vec2 p){',
-          '  float v = 0.0; float amp = 0.5;',
-          '  for(int i=0;i<3;i++){ v += amp*noise(p); p *= 2.0; amp *= 0.5; }',
-          '  return v;',
-          '}',
-          'void main(){',
-          '  vec2 uv = gl_FragCoord.xy / u_res.xy;',
-          '  uv.x *= u_res.x / u_res.y;',
-          '  vec2 p = uv * u_scale;',
-          '  float t = u_time;',
-          // Cursor interaction: a soft, wide falloff around the pointer nudges
-          // the whole smoke field gently in one direction — like the cursor
-          // pushing the smoke aside, not a spiral.
-          '  vec2 md = uv - u_mouse;',
-          '  float infl = exp(-dot(md, md) * 2.0);',  // wide, soft falloff
-          '  p += md * infl * 0.34;',                  // directional drift toward cursor
-          // domain warping that evolves in place (no directional drift):
-          // animate the warp phase with sin/cos so the smoke swirls/breathes.
-          '  vec2 q = vec2(fbm(p + 0.4*vec2(cos(t*0.6), sin(t*0.5))), fbm(p + vec2(5.2, 1.3) + 0.4*vec2(sin(t*0.45), cos(t*0.55))));',
-          '  vec2 r = vec2(fbm(p + 4.0*q + 0.3*vec2(cos(t*0.4+1.0), sin(t*0.35))), fbm(p + 4.0*q + vec2(8.3, 2.8) + 0.3*vec2(sin(t*0.3), cos(t*0.42))));',
-          '  float f = fbm(p + 4.0*r);',
-          '  f = mix(f, f + u_noise*hash(gl_FragCoord.xy + t), u_noise);',
-          // blend three colors by the smoke field — keep it dark:
-          // base sits between black and deep navy, eletric blue only peeks through.
-          '  vec3 col = mix(u_c2, u_c3, clamp(f*1.4, 0.0, 1.0));',
-          '  col = mix(col, u_c1, clamp(pow(r.x, 1.8)*0.9, 0.0, 1.0));',
-          '  gl_FragColor = vec4(col, 1.0);',
-          '}'
-        ].join('\n');
-
-        function compile(type, src) {
-          var s = gl.createShader(type);
-          gl.shaderSource(s, src);
-          gl.compileShader(s);
-          if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
-            console.error(gl.getShaderInfoLog(s));
-            return null;
+        function update() {
+          var h = window.innerHeight;
+          var band = h * 0.6; // scroll distance over which the backdrops fade
+          var homeBottom = homeEl.getBoundingClientRect().bottom;
+          var contactTop = contactEl.getBoundingClientRect().top;
+          // entry: 1 while the hero is on screen, 0 once it has scrolled off
+          var entry = Math.min(Math.max(homeBottom / band, 0), 1);
+          // exit: 0 before the contact section, ramps to 1 as it rises into view
+          var exit = Math.min(Math.max((h - contactTop) / band, 0), 1);
+          var bv = 1 - Math.max(entry, exit);   // backdrop zone = between them
+          // aboutMix: 0 during Projects, ramps to 1 as the About section (#work)
+          // rises past the viewport centre — swaps the color Projects → About.
+          var aboutMix = 0;
+          if (workEl) {
+            var workTop = workEl.getBoundingClientRect().top;
+            aboutMix = Math.min(Math.max((h * 0.5 - workTop) / (h * 0.5), 0), 1);
           }
-          return s;
+          // Projects sits underneath (full backdrop); About fades in on top.
+          if (bgProjects) bgProjects.style.opacity = String(bv);
+          if (bgAbout) bgAbout.style.opacity = String(bv * aboutMix);
         }
-
-        var vs = compile(gl.VERTEX_SHADER, vsSource);
-        var fs = compile(gl.FRAGMENT_SHADER, fsSource);
-        if (!vs || !fs) { canvas.style.display = 'none'; return; }
-
-        var prog = gl.createProgram();
-        gl.attachShader(prog, vs);
-        gl.attachShader(prog, fs);
-        gl.linkProgram(prog);
-        gl.useProgram(prog);
-
-        var buf = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
-        var loc = gl.getAttribLocation(prog, 'a_pos');
-        gl.enableVertexAttribArray(loc);
-        gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-
-        var uRes = gl.getUniformLocation(prog, 'u_res');
-        var uTime = gl.getUniformLocation(prog, 'u_time');
-        var uScale = gl.getUniformLocation(prog, 'u_scale');
-        var uNoise = gl.getUniformLocation(prog, 'u_noise');
-        var uMouse = gl.getUniformLocation(prog, 'u_mouse');
-        var uC1 = gl.getUniformLocation(prog, 'u_c1');
-        var uC2 = gl.getUniformLocation(prog, 'u_c2');
-        var uC3 = gl.getUniformLocation(prog, 'u_c3');
-
-        gl.uniform1f(uScale, config.scale);
-        gl.uniform1f(uNoise, config.noise);
-        gl.uniform3f(uC1, config.color1.r/255, config.color1.g/255, config.color1.b/255);
-        gl.uniform3f(uC2, config.color2.r/255, config.color2.g/255, config.color2.b/255);
-        gl.uniform3f(uC3, config.color3.r/255, config.color3.g/255, config.color3.b/255);
-
-        function resize() {
-          var dpr = Math.min(window.devicePixelRatio || 1, 2);
-          var w = canvas.clientWidth, h = canvas.clientHeight;
-          canvas.width = Math.floor(w * dpr);
-          canvas.height = Math.floor(h * dpr);
-          gl.viewport(0, 0, canvas.width, canvas.height);
-          gl.uniform2f(uRes, canvas.width, canvas.height);
+        var tick = false;
+        function onScroll() {
+          if (tick) return;
+          tick = true;
+          requestAnimationFrame(function () { update(); tick = false; });
         }
-        window.addEventListener('resize', resize);
-        resize();
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onScroll);
+        update();
+      })();
+    </script>
 
-        // --- Cursor tracking (aspect-corrected uv space, smoothed) ---
-        var aspect = 1;
-        function updateAspect() { aspect = canvas.width / canvas.height; }
-        updateAspect();
-        var origResize = resize;
-        // wrap resize so aspect stays current
-        resize = function () { origResize(); updateAspect(); };
-        window.removeEventListener('resize', origResize);
-        window.addEventListener('resize', resize);
+    <!-- SELECTED PROJECTS: scroll scrub. As the section scrolls into view
+         the two title words converge from the screen edges and meet the
+         star in the middle. Then p = progress through the tall runway:
+         each pair-slide rises from the bottom over its own window of p
+         (translateY 100% → 0), covering the title / previous slide — the
+         old stacking-cards feel. The star stays put (no rotation); the
+         sw--words/p1/p2 flags drive its size (and mobile dimming). -->
+    <script>
+      (function () {
+        var sec = document.getElementById('selected-work');
+        if (!sec) return;
+        var slide1 = sec.querySelector('.sw-pair--1');
+        var slide2 = sec.querySelector('.sw-pair--2');
+        var wordL = sec.querySelector('.sw-word--left');
+        var wordR = sec.querySelector('.sw-word--right');
+        var STATES = ['sw--words', 'sw--p1', 'sw--p2'];
+        var ticking = false;
+        function clamp01(v) { return Math.max(0, Math.min(1, v)); }
+        function update() {
+          ticking = false;
+          var vh = window.innerHeight;
+          var total = sec.offsetHeight - vh;
+          var top = sec.getBoundingClientRect().top;
+          var p = clamp01(-top / (total || 1));
+          // Entry: words fly in from the sides while the stage scrolls up
+          // into view (top: vh → 0), settling as it pins. Ease-out so they
+          // glide into place instead of stopping dead.
+          var w = clamp01((vh - top) / vh);
+          var e = 1 - Math.pow(1 - w, 3);
+          if (wordL) wordL.style.transform = 'translateX(' + (-(1 - e) * 60).toFixed(2) + 'vw)';
+          if (wordR) wordR.style.transform = 'translateX(' + ((1 - e) * 60).toFixed(2) + 'vw)';
+          // Slide windows: each rises over ~30% of the runway, with dwell
+          // time before/after so every view gets its moment.
+          var t1 = clamp01((p - 0.14) / 0.3);
+          var t2 = clamp01((p - 0.58) / 0.3);
+          if (slide1) slide1.style.transform = 'translateY(' + ((1 - t1) * 100).toFixed(2) + '%)';
+          if (slide2) slide2.style.transform = 'translateY(' + ((1 - t2) * 100).toFixed(2) + '%)';
+          var state = t1 <= 0 ? 0 : t2 <= 0 ? 1 : 2;
+          STATES.forEach(function (s, i) { sec.classList.toggle(s, i === state); });
+        }
+        function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(update); } }
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onScroll, { passive: true });
+        update();
+      })();
+    </script>
 
-        // target + smoothed mouse, start centered
-        var mx = 0.5 * aspect, my = 0.5;
-        var smx = mx, smy = my;
-        window.addEventListener('mousemove', function (e) {
-          var rect = canvas.getBoundingClientRect();
-          var nx = (e.clientX - rect.left) / rect.width;
-          var ny = 1.0 - (e.clientY - rect.top) / rect.height; // flip: gl y is up
-          mx = nx * aspect;
-          my = ny;
+    <!-- Navbar blur strip: hidden while the page rests at the top; fades in
+         as soon as you scroll away from it. -->
+    <script>
+      (function () {
+        var el = document.querySelector('.nav-blur');
+        if (!el) return;
+        var ticking = false;
+        function update() {
+          ticking = false;
+          el.classList.toggle('is-on', window.scrollY > 8);
+        }
+        window.addEventListener('scroll', function () {
+          if (!ticking) { ticking = true; requestAnimationFrame(update); }
         }, { passive: true });
-
-        // Time is driven by performance.now(); no Date usage.
-        var start = (typeof performance !== 'undefined' && performance.now) ? performance.now() : 0;
-
-        function frame(now) {
-          var elapsed = (now - start) / 1000;
-          // ease the smoothed cursor toward the target so it trails gently
-          smx += (mx - smx) * 0.05;
-          smy += (my - smy) * 0.05;
-          gl.uniform2f(uMouse, smx, smy);
-          gl.uniform1f(uTime, elapsed * config.speed);
-          gl.drawArrays(gl.TRIANGLES, 0, 6);
-          if (!reduceMotion) requestAnimationFrame(frame);
-        }
-
-        if (reduceMotion) {
-          // Draw a single static frame, cursor centered.
-          gl.uniform2f(uMouse, smx, smy);
-          gl.uniform1f(uTime, 0.0);
-          gl.drawArrays(gl.TRIANGLES, 0, 6);
-        } else {
-          requestAnimationFrame(frame);
-        }
+        update();
       })();
     </script>
 
@@ -706,6 +630,78 @@
         // Hide near screen edges leaving the window.
         document.addEventListener('mouseleave', function () { cursor.classList.add('is-hidden'); });
         document.addEventListener('mouseenter', function () { cursor.classList.remove('is-hidden'); });
+      })();
+    </script>
+
+    <!-- Background reacts to the pointer: the red halo (.bg-glow) trails it
+         across the dark base, and the hero orbs parallax-shift (each at a
+         different depth via --gx/--gy). One lerp loop drives both; it only
+         runs while the pointer is moving and settles to a stop. -->
+    <script>
+      (function () {
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var isTouch = window.matchMedia('(pointer: coarse)').matches;
+        var glow = document.querySelector('.bg-glow');
+        var orbs = document.querySelector('.hero-glows');
+        var hero = document.getElementById('home');
+        var ctaGlow = document.querySelector('.cta-glow');
+        var ctaCard = document.getElementById('proj-cta');
+        if ((!glow && !orbs) || reduce || isTouch) return;
+
+        // Halo trails slowly; orbs are even floatier.
+        var mx = window.innerWidth / 2, my = window.innerHeight / 2;
+        var gx = mx, gy = my;           // halo position (px, viewport)
+        var ox = 0, oy = 0;             // orb offset (-1..1, from centre)
+        var tx = 0, ty = 0;             // orb target
+        var raf = null;
+
+        window.addEventListener('mousemove', function (e) {
+          mx = e.clientX; my = e.clientY;
+          tx = (e.clientX / window.innerWidth) * 2 - 1;
+          ty = (e.clientY / window.innerHeight) * 2 - 1;
+          if (glow && !glow.classList.contains('is-on')) glow.classList.add('is-on');
+          if (ctaGlow && !ctaGlow.classList.contains('is-on')) ctaGlow.classList.add('is-on');
+          if (!raf) raf = requestAnimationFrame(tick);
+        }, { passive: true });
+
+        // The CTA card slides under a stationary pointer while scrolling —
+        // re-run a frame so its mirrored halo stays glued to the cursor.
+        window.addEventListener('scroll', function () {
+          if (!raf) raf = requestAnimationFrame(tick);
+        }, { passive: true });
+
+        function tick() {
+          var settled = true;
+
+          if (glow) {
+            gx += (mx - gx) * 0.07;
+            gy += (my - gy) * 0.07;
+            glow.style.transform =
+              'translate(' + gx.toFixed(1) + 'px,' + gy.toFixed(1) + 'px) translate(-50%, -50%)';
+            if (Math.abs(mx - gx) > 0.5 || Math.abs(my - gy) > 0.5) settled = false;
+          }
+
+          // Mirror the halo inside the CTA card (its photo hides the page
+          // glow): same viewport position, shifted into card coordinates.
+          if (ctaGlow && ctaCard) {
+            var cr = ctaCard.getBoundingClientRect();
+            if (cr.bottom > 0 && cr.top < window.innerHeight) {
+              ctaGlow.style.transform =
+                'translate(' + (gx - cr.left).toFixed(1) + 'px,' + (gy - cr.top).toFixed(1) + 'px) translate(-50%, -50%)';
+            }
+          }
+
+          // Orbs: skip the work once the hero has scrolled off-screen.
+          if (orbs && hero && hero.getBoundingClientRect().bottom > 0) {
+            ox += (tx - ox) * 0.045;
+            oy += (ty - oy) * 0.045;
+            orbs.style.setProperty('--gx', (ox * 90).toFixed(1) + 'px');
+            orbs.style.setProperty('--gy', (oy * 60).toFixed(1) + 'px');
+            if (Math.abs(tx - ox) > 0.002 || Math.abs(ty - oy) > 0.002) settled = false;
+          }
+
+          raf = settled ? null : requestAnimationFrame(tick);
+        }
       })();
     </script>
 
@@ -804,7 +800,7 @@
         if (reduce || !window.Lenis || !window.gsap) return;
 
         var lenis = new Lenis({
-          duration: 1.4,            // higher = slower / more glide
+          duration: 1.0,            // higher = slower / more glide
           smoothWheel: true,
           wheelMultiplier: 0.9      // lower = slower per wheel notch
         });
@@ -819,153 +815,27 @@
       });
     </script>
 
-    <!-- Projects: pinned horizontal carousel via GSAP ScrollTrigger. The
-         section pins; the track translates left by its overflow width. -->
+    <!-- Smooth in-page anchors: every href="#..." (nav links, "Get in touch"
+         on the CTA card, footer) glides to its target via Lenis instead of
+         the browser's instant jump. -->
     <script>
-      window.addEventListener('load', function () {
-        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        var isMobile = window.matchMedia('(max-width: 760px)').matches;
-        var section = document.getElementById('work-section');
-        var track = document.getElementById('workTrack');
-        if (!section || !track) return;
-
-        // Mobile or no GSAP / reduced motion → leave the stacked vertical
-        // layout (CSS handles it), no pinning.
-        if (isMobile || reduce || !window.gsap || !window.ScrollTrigger) return;
-
-        gsap.registerPlugin(ScrollTrigger);
-
-        var st;
-        var cardTriggers = [];
-        var cards = Array.prototype.slice.call(track.querySelectorAll('.work-card__inner'));
-
-        // Split each card's title + description into word spans (once), so the
-        // cascade can run when the card enters the centre. The .cascade-ready
-        // flag on the track activates the hidden→reveal CSS only now that we
-        // know GSAP is running (otherwise the text just shows normally).
-        track.classList.add('cascade-ready');
-        var textEls = Array.prototype.slice.call(
-          track.querySelectorAll('.work-title, .work-subtitle, .work-card .project-meta h2, .work-card .project-desc, .work-cta-title, .work-cta-sub')
-        );
-        textEls.forEach(function (el) {
-          if (el.dataset.split) return;
-          var words = el.textContent.split(/(\s+)/);
-          el.textContent = '';
-          var idx = 0;
-          words.forEach(function (w) {
-            if (/^\s+$/.test(w)) {
-              el.appendChild(document.createTextNode(w));
-            } else if (w.length) {
-              var span = document.createElement('span');
-              span.className = 'cascade-word';
-              span.style.setProperty('--i', idx++);
-              span.textContent = w;
-              el.appendChild(span);
-            }
-          });
-          el.dataset.split = '1';
+      (function () {
+        document.addEventListener('click', function (e) {
+          var a = e.target.closest ? e.target.closest('a[href^="#"]') : null;
+          if (!a) return;
+          var id = a.getAttribute('href').slice(1);
+          var el = id && document.getElementById(id);
+          if (!el) return;
+          e.preventDefault();
+          var y = el.getBoundingClientRect().top + window.scrollY;
+          if (window.__lenis) window.__lenis.scrollTo(y, { duration: 1.4 });
+          else window.scrollTo({ top: y, behavior: 'smooth' });
         });
-
-        function build() {
-          if (st) st.kill();
-          cardTriggers.forEach(function (t) { t.kill(); });
-          cardTriggers = [];
-          gsap.set(track, { x: 0, clearProps: '' });
-          cards.forEach(function (c) { gsap.set(c, { y: 0 }); });
-
-          var distance = track.scrollWidth - window.innerWidth;
-          if (distance <= 0) return;
-
-          // Lenis makes the whole page scroll at a uniform slow rhythm, so we
-          // can give the carousel a little extra scroll length to let cards
-          // linger without it feeling faster/slower than the rest.
-          var SCROLL_FACTOR = 1.4;
-          var scrollLen = distance * SCROLL_FACTOR;
-
-          var tween = gsap.to(track, {
-            x: -distance,
-            ease: 'none'
-          });
-
-          var ctaPanel = track.querySelector('.work-panel--cta');
-          var titlePanel = track.querySelector('.work-panel--title');
-
-          st = ScrollTrigger.create({
-            trigger: section,
-            start: 'top top',
-            end: '+=' + scrollLen,
-            pin: true,
-            pinSpacing: true,
-            scrub: true,          // no lag → track lands exactly at the end
-            anticipatePin: 0,     // no pre-shift that causes the release jump
-            invalidateOnRefresh: true,
-            animation: tween,
-            // The title (first) and CTA (last) panels never cross the viewport,
-            // so reveal them by the pin's own progress: title right away, CTA
-            // near the end.
-            onEnter: function () { if (titlePanel) titlePanel.classList.add('words-in'); },
-            onEnterBack: function () { if (titlePanel) titlePanel.classList.add('words-in'); },
-            onUpdate: function (self) {
-              if (titlePanel) titlePanel.classList.toggle('words-in', self.progress < 0.5);
-              if (ctaPanel) ctaPanel.classList.toggle('words-in', self.progress > 0.8);
-            }
-          });
-
-          // Each card rises a touch from below as it scrolls into the viewport.
-          // containerAnimation ties these triggers to the horizontal tween.
-          cards.forEach(function (card) {
-            var t = gsap.fromTo(card,
-              { yPercent: 60 },
-              {
-                yPercent: 0,
-                ease: 'none',
-                scrollTrigger: {
-                  trigger: card,
-                  containerAnimation: tween,
-                  // Start while the card is still off-screen to the right and
-                  // finish only once it reaches the centre, so the rise spans
-                  // the whole entry instead of snapping up at the end.
-                  start: 'left right',     // card's left edge at viewport right
-                  end: 'left center',      // ...travels until it hits centre
-                  scrub: true,
-                  invalidateOnRefresh: true
-                }
-              }
-            );
-            if (t.scrollTrigger) cardTriggers.push(t.scrollTrigger);
-          });
-
-          // Cascade the words in for each project card as it scrolls into the
-          // centre. The title (first) and CTA (last) panels never cross the
-          // viewport, so they're revealed via the pin's progress instead.
-          cards.forEach(function (card) {
-            var workCard = card.closest('.work-card') || card;
-            // skip the first/last panels (handled by pin progress below)
-            if (workCard.classList.contains('work-panel--title') ||
-                workCard.classList.contains('work-panel--cta')) return;
-
-            var ct = ScrollTrigger.create({
-              trigger: card,
-              containerAnimation: tween,
-              start: 'left 80%',     // card's left edge entering from the right
-              end: 'right 20%',      // until its right edge is leaving left
-              onEnter: function () { workCard.classList.add('words-in'); },
-              onEnterBack: function () { workCard.classList.add('words-in'); },
-              onLeave: function () { workCard.classList.remove('words-in'); },
-              onLeaveBack: function () { workCard.classList.remove('words-in'); }
-            });
-            if (ct.isActive) workCard.classList.add('words-in');
-            cardTriggers.push(ct);
-          });
-
-          ScrollTrigger.refresh();
-        }
-
-        build();
-        // Rebuild geometry on resize (debounced via ScrollTrigger.refresh).
-        window.addEventListener('resize', function () { ScrollTrigger.refresh(); });
-      });
+      })();
     </script>
+
+    <!-- Projects use a pure-CSS sticky stacking effect (see .stacking-card in
+         styles.css) — no JavaScript needed here. -->
 
     <!-- Worldify divider line: draws itself when the projects section first
          comes into view (independent of the horizontal scroll). -->
@@ -987,6 +857,151 @@
         obs.observe(section);
       })();
     </script>
+
+    <!-- About photo: cinematic reveal (clip opens + zoom settles + fade) when
+         it enters view; reverses when it scrolls out. -->
+    <script>
+      (function () {
+        var visual = document.querySelector('#about .about-visual');
+        if (!visual) return;
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduce || !('IntersectionObserver' in window)) {
+          visual.classList.add('reveal-in');   // just show it
+          return;
+        }
+        // Reveal once the photo is comfortably in view; reverse as it leaves.
+        var obs = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            visual.classList.toggle('reveal-in', entry.isIntersecting);
+          });
+        }, { threshold: 0, rootMargin: '-18% 0px -18% 0px' });
+        obs.observe(visual);
+      })();
+    </script>
+
+    <!-- About: floating photos reveal + parallax at different scroll speeds -->
+    <script>
+      (function () {
+        var floats = Array.prototype.slice.call(document.querySelectorAll('.about-float'));
+        if (!floats.length) return;
+        var intro = document.querySelector('.about-intro');
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        // Reveal each float (fade + settle) as it scrolls into view, and
+        // reset it when it scrolls back out — so the reveal replays every
+        // time the photo re-enters, not just on first load.
+        if ('IntersectionObserver' in window) {
+          var obs = new IntersectionObserver(function (entries) {
+            entries.forEach(function (e) {
+              e.target.classList.toggle('is-in', e.isIntersecting);
+            });
+          }, { threshold: 0.15 });
+          floats.forEach(function (f) { obs.observe(f); });
+        } else {
+          floats.forEach(function (f) { f.classList.add('is-in'); });
+        }
+
+        if (reduce) return; // no parallax when motion is reduced
+
+        // Parallax: because the photos are spread down a TALL section, each one
+        // keys off ITS OWN position (its untransformed document-Y centre vs the
+        // viewport centre) rather than one shared anchor — otherwise the lower
+        // photos would drift far out of place. data-speed scales how far each
+        // one moves, so they travel at different speeds.
+        var data = floats.map(function (f) {
+          return { el: f, speed: parseFloat(f.getAttribute('data-speed')) || 0, base: 0 };
+        });
+        // Cache each float's untransformed centre. Clear --py first so a
+        // previously-applied parallax offset doesn't pollute the reading.
+        function measure() {
+          var sy = window.pageYOffset;
+          data.forEach(function (d) { d.el.style.setProperty('--py', '0px'); });
+          data.forEach(function (d) {
+            var r = d.el.getBoundingClientRect();
+            d.base = r.top + sy + d.el.offsetHeight / 2;
+          });
+        }
+        var ticking = false;
+        function update() {
+          ticking = false;
+          if (window.innerWidth <= 1100) return; // floats are hidden here
+          var vh = window.innerHeight, sy = window.pageYOffset;
+          data.forEach(function (d) {
+            var delta = (vh / 2) - (d.base - sy);
+            d.el.style.setProperty('--py', (delta * d.speed).toFixed(1) + 'px');
+          });
+        }
+        function onScroll() {
+          if (ticking) return;
+          ticking = true;
+          requestAnimationFrame(update);
+        }
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', function () { measure(); onScroll(); });
+        measure();
+        update();
+      })();
+    </script>
+
+    <!-- About bio: reading reveal. Each word lifts and brightens in sequence,
+         scrubbed to the scroll (and dims back on the way up) — like a text
+         being read as you move through the section. Without GSAP / with
+         reduced motion the text just stays fully visible. -->
+    <script>
+      window.addEventListener('load', function () {
+        var paras = document.querySelectorAll('.about-text > p');
+        var wrapEl = document.querySelector('.about-text');
+        if (!paras.length || !wrapEl) return;
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduce || !window.gsap || !window.ScrollTrigger) return;
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Split each paragraph into word spans (plain text only — the bio has
+        // no nested markup). Whitespace runs collapse to a single space.
+        var words = [];
+        Array.prototype.forEach.call(paras, function (p) {
+          var text = p.textContent;
+          p.textContent = '';
+          text.split(/(\s+)/).forEach(function (w) {
+            if (!w) return;
+            if (/^\s+$/.test(w)) { p.appendChild(document.createTextNode(' ')); return; }
+            var s = document.createElement('span');
+            s.className = 'about-word';
+            s.textContent = w;
+            p.appendChild(s);
+            words.push(s);
+          });
+        });
+        if (!words.length) return;
+
+        // Slow, gradual cascade: a longer per-word duration + a wide stagger
+        // spread out each word's own transition across more of the scrubbed
+        // range, and a wider start/end window means more scrolling maps to
+        // the same sequence — both make the "reading" pace feel unhurried,
+        // matching the rest of the site's soft, slow-easing motion.
+        gsap.fromTo(words,
+          { opacity: 0.14, yPercent: 38 },
+          {
+            opacity: 1,
+            yPercent: 0,
+            ease: 'power2.out',
+            duration: 1.4,
+            stagger: 0.7,
+            scrollTrigger: {
+              trigger: wrapEl,
+              start: 'top 92%',
+              // End while the text's tail is still mid-screen: finishing any
+              // lower and the last words only fully paint once they're already
+              // under the navbar's blur strip.
+              end: 'bottom 40%',
+              scrub: 1.2
+            }
+          });
+        ScrollTrigger.refresh();
+      });
+    </script>
+
+
 
     <!-- Footer reveal: slides up + fades in when it enters the viewport -->
     <script>
@@ -1016,14 +1031,18 @@
 
         obs.observe(footer);
 
-        // Once the footer's top crosses ~70% of the viewport, fade out the
+        // Once the footer's slot crosses ~70% of the viewport, fade out the
         // navbar + contact form (its links live in the footer instead).
+        // Measure the .footer-reveal WINDOW, not the card: during the
+        // two-layer reveal the card is transform-pinned near the top of the
+        // viewport the whole time, so its own rect would fire this the
+        // moment the reveal starts — while the form is still in use.
+        var slot = document.querySelector('.footer-reveal') || footer;
         var tking = false;
         function checkFooter() {
           tking = false;
-          var fr = footer.getBoundingClientRect();
+          var fr = slot.getBoundingClientRect();
           var vh = window.innerHeight;
-          // navbar/form fade once the footer top crosses ~70%
           document.body.classList.toggle('at-footer', fr.top < vh * 0.7);
           // link columns reveal only at the very bottom (footer's bottom edge
           // near the bottom of the viewport — i.e. you've scrolled all the way).
@@ -1094,19 +1113,24 @@
         // Start a little below final position and transparent.
         gsap.set(ordered, { yPercent: 60, opacity: 0 });
 
-        // Build the cascade as a single scrubbed timeline so each WORD can use
-        // its own per-letter pace ("Lucas" slower than "Inzirillo"). The name
-        // sits at the very bottom of the page; drive it from the footer's
-        // height (no pin — the footer's own translateY transform fights GSAP's
-        // position:fixed pin and would shove the name off-screen).
-        var tl = gsap.timeline({
-          scrollTrigger: {
-            trigger: footer,
-            start: 'top bottom',      // footer top enters viewport bottom → 0
-            end: 'bottom bottom',     // footer bottom reaches viewport bottom → 1
-            scrub: true
-          }
-        });
+        // The footer card's own slide-in used to run on a SEPARATE clock (an
+        // IntersectionObserver + fixed-duration CSS transition), independent
+        // from the name/columns' scroll-scrubbed reveal below. That let the
+        // two drift out of sync — e.g. the link columns could finish fading
+        // in while the card itself hadn't started sliding into place yet.
+        // Folding the card's position into this SAME timeline (below) makes
+        // one continuous scroll position drive everything, so the sequence
+        // (card settles → columns build → name cascades in) can't desync.
+        footer.classList.add('card-scrub');   // CSS drops the old transition
+
+        // Build the cascade as a single PAUSED timeline so each WORD can use
+        // its own per-letter pace ("Lucas" slower than "Inzirillo"). The
+        // two-layer reveal script scrubs it (window.__footerReveal.progress)
+        // while the footer is being uncovered, so the content builds with
+        // the scroll and reverses with it. The footer card's position itself
+        // is owned by that reveal scrub — no card tween here.
+        var tl = gsap.timeline({ paused: true });
+        window.__footerReveal = tl;
         // Lucas: slower cascade (bigger gap between letters).
         tl.to(lucasOrder, {
           yPercent: 0, opacity: 1, ease: 'power3.out',
@@ -1117,37 +1141,75 @@
           yPercent: 0, opacity: 1, ease: 'power3.out',
           stagger: { each: 0.06, from: 'start' }
         }, 0);
-
+        // Footer link columns: reveal once the card has mostly settled,
+        // finishing well before the name cascade's finale. Staggered so the
+        // row builds up left→right.
+        var cols = footer.querySelectorAll('.footer-col');
+        if (cols.length) {
+          footer.classList.add('links-scrub');   // CSS drops the transition
+          gsap.set(cols, { y: 22, opacity: 0 });
+          tl.to(cols, {
+            y: 0, opacity: 1, ease: 'power2.out',
+            stagger: 0.08
+          }, 0.15);
+        }
         // Recompute positions once everything (fonts, layout) is final.
         ScrollTrigger.refresh();
       });
     </script>
 
-    <!-- OPEN TO WORK badge: slides in from the left each time the hero
-         enters the viewport. -->
+    <!-- Footer reveal, scrubbed to the scroll: the footer content emerges
+         from below at ~40% of the scroll speed (it reads as living behind
+         the page) while the shadow over it clears — the more you scroll,
+         the more it surfaces. One timeline, one scrub: everything reverses
+         with the scroll too. -->
     <script>
-      (function () {
-        var badge = document.querySelector('.badge--open');
-        if (!badge) return;
-
+      window.addEventListener('load', function () {
+        var wrap = document.querySelector('.footer-reveal');
+        var footer = document.querySelector('.footer-card');
+        if (!wrap || !footer) return;
         var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        if (reduce || !('IntersectionObserver' in window)) {
-          badge.classList.add('is-revealed');
-          return;
-        }
+        if (reduce || !window.gsap || !window.ScrollTrigger) return;   // CSS fallback: footer scrolls in normally
+        gsap.registerPlugin(ScrollTrigger);
 
-        var obs = new IntersectionObserver(function (entries) {
-          entries.forEach(function (entry) {
-            badge.classList.toggle('is-revealed', entry.isIntersecting);
-          });
-        }, { threshold: 0.1 });
+        footer.classList.add('card-scrub');   // drop the CSS entrance transition
+        wrap.classList.add('fr-armed');       // shows the shade overlay
+        var shade = wrap.querySelector('.footer-shade');
 
-        obs.observe(badge);
-      })();
+        var tl = gsap.timeline({
+          defaults: { ease: 'none' },
+          scrollTrigger: {
+            trigger: wrap,
+            start: 'top bottom',     // window's top reaches the fold…
+            end: 'bottom bottom',    // …until the page's very end
+            scrub: true,
+            invalidateOnRefresh: true,
+            onUpdate: function (self) {
+              // The content cascade (name, columns) builds along the way.
+              if (window.__footerReveal) {
+                var t = Math.max(0, Math.min(1, (self.progress - 0.45) / 0.5));
+                window.__footerReveal.progress(t);
+              }
+            }
+          }
+        });
+
+        // Content emerges from below: it travels 60% less than the scroll,
+        // so it visibly rises out from behind the page as it's uncovered.
+        tl.fromTo(footer,
+          { y: function () { return -wrap.offsetHeight * 0.6; } },
+          { y: 0 }, 0);
+        // The shadow over the content clears as it rises.
+        if (shade) tl.fromTo(shade, { opacity: 0.6 }, { opacity: 0, duration: 0.88 }, 0);
+
+        ScrollTrigger.refresh();
+      });
     </script>
 
-    <!-- Loading screen: 0→100 counter where only the changing digit rolls
-         (odometer style), then the overlay retires. -->
+    <!-- Loading screen: 0→100 odometer. Each place is a vertical reel of
+         digits moved with a transform every frame, so the motion is fully
+         continuous — no snapping. Higher places roll only while the place
+         below sweeps 9→0 (true odometer carry). -->
     <script>
       (function () {
         var loader = document.getElementById('loader');
@@ -1160,61 +1222,86 @@
           return;
         }
 
-        var digits = {
-          hundreds: counter.querySelector('[data-place="hundreds"]'),
-          tens:     counter.querySelector('[data-place="tens"]'),
-          ones:     counter.querySelector('[data-place="ones"]')
-        };
-
-        // Update each place; only the digit that actually changed does the
-        // fade-swap (floats up + fades, the new digit drops in from below).
-        function setDigit(el, ch) {
-          if (el.textContent === ch) return;       // unchanged → stays still
-          el.textContent = ch;
-          el.classList.remove('is-swap');
-          void el.offsetWidth;                     // reflow to restart anim
-          el.classList.add('is-swap');
+        function buildReel(place, cells) {
+          var win = counter.querySelector('[data-place="' + place + '"]');
+          var reel = document.createElement('span');
+          reel.className = 'loader__reel';
+          cells.forEach(function (ch) {
+            var c = document.createElement('span');
+            c.className = 'loader__cell';
+            c.textContent = ch;
+            reel.appendChild(c);
+          });
+          win.textContent = '';
+          win.appendChild(reel);
+          return { win: win, reel: reel };
         }
 
-        function show(value) {
-          var h = value >= 100 ? String(Math.floor(value / 100)) : '';
-          var t = value >= 10 ? String(Math.floor((value % 100) / 10)) : '';
-          var o = String(value % 10);
-          setDigit(digits.hundreds, h);
-          setDigit(digits.tens, t);
-          setDigit(digits.ones, o);
+        // The ones reel holds the full 0→100 digit sequence so it never has
+        // to wrap; the value maps straight to a position on the strip.
+        var onesCells = [];
+        for (var i = 0; i <= 100; i++) onesCells.push(String(i % 10));
+        var ones = buildReel('ones', onesCells);
+        var tens = buildReel('tens', ['', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0']);
+        var hund = buildReel('hundreds', ['', '1']);
+
+        // 0.3em matches the window bleed in CSS (.loader__place height
+        // 1.6em) so the active digit sits centered in the fade mask.
+        function setPos(r, pos) {
+          r.reel.style.transform = 'translateY(' + (0.3 - pos) + 'em)';
+        }
+
+        // v is continuous (0→100). Tens/hundreds only roll during the 9→0
+        // sweep of the place below; their windows widen as they come in.
+        function render(v) {
+          setPos(ones, v);
+          setPos(tens, Math.floor(v / 10) + Math.max(0, (v % 10) - 9));
+          setPos(hund, Math.max(0, v - 99));
+          tens.win.classList.toggle('is-on', v >= 9);
+          hund.win.classList.toggle('is-on', v >= 99);
         }
 
         document.body.style.overflow = 'hidden';
         window.scrollTo(0, 0);
 
-        // Two-phase count: a quick ramp 0→95, then a deliberately slow
-        // crawl through the last 5 numbers (95→100).
-        var FAST_DUR = 1300;   // ms to reach 95
-        var SLOW_DUR = 2200;   // ms to crawl 95 → 100
+        // One continuous curve: eases in from 0, sweeps the middle, then
+        // glides through the last few numbers into 100 — no phase jump.
+        var DUR = 3300;
         var startTs = null;
-        function easeOut(x) { return 1 - Math.pow(1 - x, 3); }
+        var prevV = 0, prevTs = null, blurNow = 0;
+        function ease(p) {
+          p = Math.pow(p, 1.5);
+          return 1 - Math.pow(1 - p, 3);
+        }
         function step(ts) {
           if (startTs === null) startTs = ts;
-          var elapsed = ts - startTs;
-          var value;
-          if (elapsed < FAST_DUR) {
-            value = easeOut(elapsed / FAST_DUR) * 95;
-          } else {
-            var sp = Math.min(1, (elapsed - FAST_DUR) / SLOW_DUR);
-            value = 95 + easeOut(sp) * 5; // last 5 numbers, drawn out
+          var p = Math.min(1, (ts - startTs) / DUR);
+          var v = ease(p) * 100;
+          // Whole numbers only: the reel's CSS transition eases each step,
+          // so digits always land centered and stay aligned across places.
+          render(Math.round(v));
+          // Motion blur scaled to roll speed (smoothed so it doesn't
+          // flicker with frame-time jitter); fades to 0 as the count
+          // settles into 100.
+          if (prevTs !== null && ts > prevTs) {
+            var speed = (v - prevV) / (ts - prevTs) * 1000; // numbers/s
+            var target = Math.min(1.2, speed * 0.022);
+            blurNow += (target - blurNow) * 0.2;
+            counter.style.setProperty('--reel-blur', blurNow.toFixed(2) + 'px');
           }
-          show(Math.round(value));
-          if (elapsed < FAST_DUR + SLOW_DUR) requestAnimationFrame(step);
-          else show(100);
+          prevV = v;
+          prevTs = ts;
+          if (p < 1) requestAnimationFrame(step);
+          else counter.style.setProperty('--reel-blur', '0px');
         }
-        show(0);
+        render(0);
         requestAnimationFrame(step);
 
+        // Matches the CSS: loader-out starts at 3.5s and runs 0.9s.
         window.setTimeout(function () {
           loader.classList.add('is-done');
           document.body.style.overflow = '';
-        }, FAST_DUR + SLOW_DUR + 600);
+        }, 4400);
       })();
     </script>
 
@@ -1285,12 +1372,13 @@
     </script>
 
     <!-- Roll/swap on hover: each letter rolls up and an identical copy
-         enters from below (odometer style), staggered left to right. -->
+         enters from below (odometer style), staggered left to right.
+         Navbar links only — footer links stay plain. -->
     <script>
       (function () {
         var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         if (reduce) return;
-        var targets = document.querySelectorAll('.nav-links a, .footer-links a, .footer-nav a');
+        var targets = document.querySelectorAll('.nav-links a');
 
         targets.forEach(function (el) {
           var text = el.textContent;
@@ -1398,15 +1486,21 @@
         // Elements whose plain text gets split into animated words.
         // (h3 titles inside .panel are excluded — their flex layout with the
         // divider line would break if their text became flex items.)
-        var SELECTOR = [
-          '.about-text > p',
-          '.panel li strong', '.panel li span', '.panel li small', '.panel p',
-          '.stack-list strong', '.stack-list span',
-          '.work-panel--title .work-title',
-          '.work-panel--title .work-subtitle',
+        // Short, punchy text keeps the per-word cascade. Long text (About
+        // paragraphs, panels) reveals as a WHOLE BLOCK instead — splitting it
+        // into hundreds of <span>s bloats the DOM and hurts performance.
+        var WORD_SELECTOR = [
+          '.services-header .work-title',
           '.contact-eyebrow', '.contact-title'
         ].join(', ');
-        var blocks = Array.prototype.slice.call(document.querySelectorAll(SELECTOR));
+        // (The About bio paragraphs are handled by their own scroll-scrubbed
+        //  word reveal — see the "About bio: reading reveal" script.)
+        var BLOCK_SELECTOR = [
+          '.panel li strong', '.panel li span', '.panel li small', '.panel p',
+          '.stack-list strong', '.stack-list span'
+        ].join(', ');
+        var wordBlocks = Array.prototype.slice.call(document.querySelectorAll(WORD_SELECTOR));
+        var blockEls = Array.prototype.slice.call(document.querySelectorAll(BLOCK_SELECTOR));
 
         // Split text into per-word spans. Walks child nodes so <br> is kept,
         // and recurses into inline elements (e.g. <span class="accent">) so
@@ -1443,14 +1537,39 @@
           splitInto(el, nodes, { i: 0 });
         }
 
-        blocks.forEach(splitWords);
+        wordBlocks.forEach(splitWords);
+        // Long blocks reveal as a whole (fade + rise) — no per-word spans.
+        blockEls.forEach(function (el) { el.classList.add('reveal-block'); });
 
         // Hero text gets split too; it cascades on load (timed to the loader)
-        // and then replays on scroll like the rest.
-        var heroBlocks = Array.prototype.slice.call(
-          document.querySelectorAll('.hero-title, .hero-intro')
-        );
-        heroBlocks.forEach(splitWords);
+        // and then replays on scroll like the rest. The title splits per
+        // LETTER — finer cascade in/out, and each letter is a hover target
+        // for the scramble effect. The intro stays per word.
+        function splitLetters(el) {
+          var nodes = Array.prototype.slice.call(el.childNodes);
+          el.textContent = '';
+          var n = 0;
+          nodes.forEach(function (node) {
+            if (node.nodeType === 3) {
+              node.textContent.split('').forEach(function (ch) {
+                if (/\s/.test(ch)) { el.appendChild(document.createTextNode(ch)); return; }
+                var span = document.createElement('span');
+                span.className = 'reveal-word hero-letter';
+                span.style.setProperty('--i', n++);
+                span.setAttribute('data-char', ch);
+                span.textContent = ch;
+                el.appendChild(span);
+              });
+            } else {
+              el.appendChild(node); // <br> survives in place
+            }
+          });
+        }
+        var heroTitle = document.querySelector('.hero-title');
+        var heroIntro = document.querySelector('.hero-intro');
+        if (heroTitle) splitLetters(heroTitle);
+        if (heroIntro) splitWords(heroIntro);
+        var heroBlocks = [heroTitle, heroIntro].filter(Boolean);
 
         // Reveal each block as it enters; reset when it leaves so the
         // cascade replays every time it scrolls back into view.
@@ -1460,7 +1579,7 @@
           });
         }, { threshold: 0.2, rootMargin: '0px 0px -10% 0px' });
 
-        blocks.forEach(function (b) { obs.observe(b); });
+        wordBlocks.concat(blockEls).forEach(function (b) { obs.observe(b); });
 
         // First hero reveal is timed to the loader clearing; afterwards the
         // observer drives replays as it scrolls in and out of view.
@@ -1489,176 +1608,94 @@
       })();
     </script>
 
-    <!-- AI chat: streams replies from the /api/chat serverless function. -->
+    <!-- Hero letter scramble: hovering a letter of the name cycles it
+         through random symbols (flashing red, jittering) before it snaps
+         back. Width is locked on first hover so neighbours don't shift. -->
     <script>
       (function () {
-        var form = document.getElementById('chatForm');
-        var input = document.getElementById('chatInput');
-        var log = document.getElementById('chatLog');
-        var sendBtn = form && form.querySelector('.chat-send');
-        var suggestions = document.getElementById('chatSuggestions');
-        if (!form || !input || !log) return;
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduce) return;
+        var letters = Array.prototype.slice.call(document.querySelectorAll('.hero-letter'));
+        if (!letters.length) return;
 
-        // Conversation history sent to the API (excludes the greeting).
-        var history = [];
-        var busy = false;
+        var SYMBOLS = '!<>-_\\/[]{}=+*^?#%&@$01';
 
-        // Only let the log capture the wheel (data-lenis-prevent) when it
-        // actually has overflow — otherwise scrolling over it gets stuck.
-        function syncScrollLock() {
-          var overflows = log.scrollHeight > log.clientHeight + 2;
-          if (overflows) log.setAttribute('data-lenis-prevent', '');
-          else log.removeAttribute('data-lenis-prevent');
-        }
-
-        function scrollToBottom() { log.scrollTop = log.scrollHeight; syncScrollLock(); }
-
-        function addMessage(role) {
-          var msg = document.createElement('div');
-          msg.className = 'chat-msg chat-msg--' + (role === 'user' ? 'user' : 'ai');
-          if (role === 'ai') {
-            var av = document.createElement('span');
-            av.className = 'chat-avatar';
-            av.setAttribute('aria-hidden', 'true');
-            av.textContent = 'L';
-            msg.appendChild(av);
-          }
-          var bubble = document.createElement('div');
-          bubble.className = 'chat-bubble';
-          msg.appendChild(bubble);
-          log.appendChild(msg);
-          scrollToBottom();
-          return bubble;
-        }
-
-        function typingBubble() {
-          var bubble = addMessage('ai');
-          bubble.innerHTML = '<span class="chat-typing"><span></span><span></span><span></span></span>';
-          return bubble;
-        }
-
-        function setBusy(state) {
-          busy = state;
-          if (sendBtn) sendBtn.disabled = state;
-          input.disabled = state;
-        }
-
-        async function send(text) {
-          if (busy || !text.trim()) return;
-          var clean = text.trim();
-
-          // user bubble
-          var ub = addMessage('user');
-          ub.textContent = clean;
-          history.push({ role: 'user', content: clean });
-
-          setBusy(true);
-          var bubble = typingBubble();
-          var started = false;
-
-          try {
-            var resp = await fetch('/api/chat', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ messages: history })
-            });
-
-            if (!resp.ok || !resp.body) {
-              bubble.textContent = "Hmm, my brain is offline right now 😅 Try the contact form below and I'll get back to you for real.";
-              setBusy(false);
-              return;
+        letters.forEach(function (span) {
+          span.addEventListener('mouseenter', function () {
+            if (span._scrambling) return;
+            // Lock the slot to the real glyph's width so the line doesn't
+            // wiggle while narrower symbols cycle through it. offsetWidth
+            // ignores transforms, so hovering mid-cascade measures true.
+            if (!span.style.width) {
+              span.style.width = span.offsetWidth + 'px';
+              span.style.textAlign = 'center';
             }
-
-            var reader = resp.body.getReader();
-            var decoder = new TextDecoder();
-            var full = '';
-            var renderedWords = 0;   // how many word-spans already added
-
-            // Render whatever full text we have so far, appending only the
-            // NEW complete words as animated spans (fade + rise cascade).
-            function renderWords(force) {
-              // split into tokens keeping spaces; only commit "finished" words
-              // (i.e. all but the last token while still streaming).
-              var tokens = full.split(/(\s+)/).filter(function (t) { return t.length; });
-              var commitUpTo = force ? tokens.length : tokens.length - 1;
-              for (var i = renderedWords; i < commitUpTo; i++) {
-                var tok = tokens[i];
-                if (/^\s+$/.test(tok)) {
-                  bubble.appendChild(document.createTextNode(tok));
-                } else {
-                  // strip stray markdown markers (**bold**, _italic_, `code`)
-                  tok = tok.replace(/\*\*|__|`|(^\*|\*$)|(^_|_$)/g, '');
-                  if (!tok) { renderedWords = i + 1; continue; }
-                  var span = document.createElement('span');
-                  span.className = 'chat-word';
-                  span.textContent = tok;
-                  bubble.appendChild(span);
-                  // trigger the transition next frame
-                  requestAnimationFrame(function (s) {
-                    return function () { s.classList.add('is-in'); };
-                  }(span));
-                }
-                renderedWords = i + 1;
+            span._scrambling = true;
+            span.classList.add('is-scrambling');
+            var ticks = 0;
+            var id = window.setInterval(function () {
+              ticks++;
+              if (ticks >= 8) {
+                window.clearInterval(id);
+                span.textContent = span.getAttribute('data-char');
+                span.classList.remove('is-scrambling');
+                span._scrambling = false;
+                return;
               }
-              scrollToBottom();
-            }
-
-            while (true) {
-              var chunk = await reader.read();
-              if (chunk.done) break;
-              var piece = decoder.decode(chunk.value, { stream: true });
-              if (!started) { bubble.textContent = ''; started = true; }
-              full += piece;
-              renderWords(false);
-            }
-            renderWords(true); // commit the final word
-
-            if (!full) {
-              bubble.textContent = "I didn't catch that — mind rephrasing?";
-            } else {
-              // store plain text (no markdown markers) in the history
-              history.push({ role: 'assistant', content: full.replace(/\*\*|__|`/g, '') });
-            }
-          } catch (e) {
-            bubble.textContent = "Connection hiccup 😅 Try again, or use the contact form below.";
-          }
-          setBusy(false);
-          input.focus();
-        }
-
-        form.addEventListener('submit', function (e) {
-          e.preventDefault();
-          var text = input.value;
-          input.value = '';
-          send(text);
+              span.textContent = SYMBOLS.charAt(Math.floor(Math.random() * SYMBOLS.length));
+            }, 70);
+          });
         });
 
-        if (suggestions) {
-          suggestions.querySelectorAll('.chat-chip').forEach(function (chip) {
-            chip.addEventListener('click', function () {
-              send(chip.textContent);
-            });
-          });
-        }
+        // The fluid font-size makes locked widths stale on resize — clear them.
+        window.addEventListener('resize', function () {
+          letters.forEach(function (s) { s.style.width = ''; });
+        });
       })();
     </script>
 
+
+
     <!-- Vertical scroll progress: fill each section's segment by how far the
-         viewport centre has travelled through it; hide over the footer. -->
+         viewport centre has travelled through it; hide over the footer.
+         Segments navigate on click and label themselves on hover; inside
+         Projects the middle slot expands into per-project markers. -->
     <script>
       (function () {
         var wrap = document.getElementById('scrollProgress');
         if (!wrap) return;
-        var segs = Array.prototype.slice.call(wrap.querySelectorAll('.scroll-progress__seg'));
+        // Top-level entries: section segments + the projects group (in order).
+        var items = Array.prototype.slice.call(wrap.children);
+        // Solid (no-blend) duplicate bar, stacked on top — see .scroll-progress--solid.
+        var solidWrap = document.getElementById('scrollProgressSolid');
+        var itemsSolid = solidWrap ? Array.prototype.slice.call(solidWrap.children) : [];
+        // Per-project markers inside the group, on both bars.
+        var group = wrap.querySelector('.scroll-progress__group');
+        var groupSolid = solidWrap && solidWrap.querySelector('.scroll-progress__group');
+        var subs = group ? Array.prototype.slice.call(group.children) : [];
+        var subsSolid = groupSolid ? Array.prototype.slice.call(groupSolid.children) : [];
+        var tip = document.getElementById('progressTip');
+        var ctaEl = document.getElementById('proj-cta');
         var footer = document.querySelector('.footer-card');
         var ticking = false;
 
         function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 
+        // Label each project marker with its project's title (hover tooltip).
+        var projCards = Array.prototype.slice.call(
+          document.querySelectorAll('#selected-work .sw-project')
+        );
+        subs.forEach(function (s, i) {
+          var t = projCards[i] && projCards[i].getAttribute('data-title');
+          s.setAttribute('data-label', t || 'Project ' + (i + 1));
+        });
+        // One slot per project marker across the section's scroll range.
+        var cardCount = subs.length || 4;
+
         // Build the volume bars across the top (for the projects section).
         var barsEl = document.getElementById('barsViz');
         var bars = [];
-        var BAR_COUNT = 140;
+        var BAR_COUNT = 48;
         if (barsEl) {
           var frag = document.createDocumentFragment();
           for (var b = 0; b < BAR_COUNT; b++) {
@@ -1670,30 +1707,43 @@
           barsEl.appendChild(frag);
         }
 
-        // Returns the real scroll height of a section (pin-spacer for the
-        // pinned projects section).
-        function sectionHeight(id) {
+        // The element whose box is a section's real scroll range (pin-spacer
+        // for the pinned projects section, the section itself otherwise).
+        function measureElFor(id) {
           var el = document.getElementById(id);
-          if (!el) return 0;
+          if (!el) return null;
           if (id === 'work-section') {
             var sp = el.closest('.pin-spacer');
-            if (sp) return sp.offsetHeight;
+            if (sp) return sp;
           }
-          return el.offsetHeight;
+          return el;
+        }
+
+        function sectionHeight(id) {
+          var el = measureElFor(id);
+          return el ? el.offsetHeight : 0;
         }
 
         // Give each segment a length proportional to its section's height,
-        // spread over a fixed total so the bar stays a reasonable size.
+        // spread over a fixed total so the bar stays a reasonable size. The
+        // group's height goes through a CSS var so its expansion can animate.
         function sizeSegments() {
-          var heights = segs.map(function (seg) {
-            return sectionHeight(seg.getAttribute('data-section')) || 1;
+          var heights = items.map(function (item) {
+            return sectionHeight(item.getAttribute('data-section')) || 1;
           });
           var total = heights.reduce(function (a, b) { return a + b; }, 0) || 1;
           var TOTAL_PX = clamp(window.innerHeight * 0.5, 240, 460);
           var MIN = 14;
-          segs.forEach(function (seg, i) {
+          items.forEach(function (item, i) {
             var h = Math.max(MIN, Math.round(heights[i] / total * TOTAL_PX));
-            seg.style.height = h + 'px';
+            var solid = itemsSolid[i];
+            if (item === group) {
+              item.style.setProperty('--gh', h + 'px');
+              if (solid) solid.style.setProperty('--gh', h + 'px');
+            } else {
+              item.style.height = h + 'px';
+              if (solid) solid.style.height = h + 'px';
+            }
           });
         }
 
@@ -1703,69 +1753,169 @@
           var ref = window.scrollY + vh * 0.5;  // viewport centre in page coords
 
           var activeIdx = -1;
-          var projProg = -1;   // 0..1 progress through the projects section
+          var inProjects = false;
 
-          segs.forEach(function (seg, i) {
-            var id = seg.getAttribute('data-section');
-            var el = document.getElementById(id);
-            var fill = seg.querySelector('i');
-            if (!el || !fill) { return; }
-
-            // For the pinned projects section, the real scroll range is the
-            // pin-spacer GSAP inserts around it (not the 100vh visual height).
-            var measureEl = el;
-            if (id === 'work-section') {
-              var sp = el.closest('.pin-spacer');
-              if (sp) measureEl = sp;
-            }
-            var rect = measureEl.getBoundingClientRect();
+          items.forEach(function (item, i) {
+            var id = item.getAttribute('data-section');
+            var el = measureElFor(id);
+            if (!el) return;
+            var rect = el.getBoundingClientRect();
             var top = rect.top + window.scrollY;
-            var h = measureEl.offsetHeight || 1;
+            var h = el.offsetHeight || 1;
             var p = clamp((ref - top) / h, 0, 1);
-            fill.style.setProperty('--p', p.toFixed(3));
-            if (p > 0 && p < 1) activeIdx = i;
-            if (id === 'work-section' && p > 0 && p < 1) projProg = p;
-          });
+            var solid = itemsSolid[i];
 
-          // Mark the active segment (the one currently filling).
-          segs.forEach(function (seg, i) {
-            seg.classList.toggle('is-active', i === activeIdx);
-          });
-
-          // --- Projects section: swap the vertical bar for the top volume bars.
-          // The track moves across the whole pin, so it finishes at progress≈1.
-          // Show the bars a touch after entering, hide them right at the end.
-          var inProjects = projProg >= 0;
-          var barsOn = inProjects && projProg > 0.06 && projProg < 0.9;
-          if (barsEl) barsEl.classList.toggle('is-on', barsOn);
-          if (inProjects) {
-            for (var k = 0; k < bars.length; k++) {
-              var pos = (k + 0.5) / bars.length;      // 0..1 across the row
-              // COLOUR (--p): bars before the progress point are filled,
-              // soft edge at the leading bar.
-              var fillP = clamp((projProg - pos) / 0.04 + 1, 0, 1);
-              // HEIGHT (--h): a narrow peak at the current progress position
-              // that falls off quickly to the sides.
-              var dist = Math.abs(pos - projProg);
-              var height = clamp(1 - dist / 0.07, 0, 1);   // 1 at the cursor
-              height = height * height;                    // sharpen the peak
-              bars[k].style.setProperty('--p', fillP.toFixed(3));
-              bars[k].style.setProperty('--h', height.toFixed(3));
+            if (item === group) {
+              // Split the section's progress across the project markers: one
+              // slot per card. The CTA card ("Have a project in mind?") is NOT
+              // a project — while crossing it the navigator collapses back to
+              // a line and no marker reads as current.
+              var pN = p * cardCount;
+              var inProjectCards = p > 0 && p < 1 && pN < subs.length;
+              var cur = inProjectCards ? Math.min(Math.floor(pN), subs.length - 1) : -1;
+              subs.forEach(function (s, si) {
+                var f = clamp(pN - si, 0, 1);
+                s.querySelector('i').style.setProperty('--p', f.toFixed(3));
+                s.classList.toggle('is-current', si === cur);
+                var ss = subsSolid[si];
+                if (ss) {
+                  ss.querySelector('i').style.setProperty('--p', f.toFixed(3));
+                  ss.classList.toggle('is-current', si === cur);
+                }
+              });
+              if (inProjectCards) inProjects = true;
+            } else {
+              var fill = item.querySelector('i');
+              if (fill) fill.style.setProperty('--p', p.toFixed(3));
+              var fillSolid = solid && solid.querySelector('i');
+              if (fillSolid) fillSolid.style.setProperty('--p', p.toFixed(3));
             }
-          }
+            if (p > 0 && p < 1) activeIdx = i;
+          });
 
-          // Hide the whole vertical indicator over the footer OR while in the
-          // projects section (the bars take over there). Bring it back a touch
-          // before the horizontal scroll fully ends so it doesn't pop in late.
-          var hideVert = inProjects && projProg < 0.91;
+          // Mark the active segment (the one currently filling) on both bars.
+          items.forEach(function (item, i) {
+            item.classList.toggle('is-active', i === activeIdx);
+            if (itemsSolid[i]) itemsSolid[i].classList.toggle('is-active', i === activeIdx);
+          });
+
+          // Expand the projects group into navigator mode while inside it.
+          wrap.classList.toggle('in-projects', inProjects);
+          if (solidWrap) solidWrap.classList.toggle('in-projects', inProjects);
+
+          // Projects now scrolls vertically like the rest of the page, so the
+          // normal vertical progress bar stays visible there (its work-section
+          // segment fills as you scroll) — no volume-bars takeover.
+          if (barsEl) barsEl.classList.remove('is-on');
+
+          // Hide the whole vertical indicator only once the footer has fully
+          // scrolled into view — its bottom edge touching the bottom of the
+          // viewport (the true end of the page), not just as it starts to
+          // arrive.
+          var hideVert = false;
           if (footer) {
             var fr = footer.getBoundingClientRect();
-            if (fr.top < vh * 0.85) hideVert = true;
+            if (fr.bottom <= vh + 4) hideVert = true;
           }
-          wrap.classList.toggle('is-hidden', hideVert);
+
+          // Over the light project cards, flip the navbar + progress bar to dark
+          // so they stay visible. Plain colour swap (no blend). Sample the
+          // frontmost card at the navbar (top) and progress (centre) heights;
+          // the CTA card (proj-cta) is dark, so it stays light there.
+          // The progress bar recolours itself via mix-blend-mode: difference
+          // (CSS), so we only need to flip the navbar text here. Sample the
+          // frontmost card at the navbar height; the CTA card is dark, so the
+          // nav stays light there.
+          var navY = 48;
+          var navLight = false;
+          // 'selected-work' is the light (paper-white) projects stage —
+          // treated like a light card for both the navbar flip and the
+          // bar's blend handoff. The CTA card stays dark.
+          var projIds = ['selected-work', 'proj-cta'];
+          for (var ci = 0; ci < projIds.length; ci++) {
+            var pel = document.getElementById(projIds[ci]);
+            if (!pel) continue;
+            var pr = pel.getBoundingClientRect();
+            var isLight = (projIds[ci] !== 'proj-cta');
+            if (pr.top <= navY && pr.bottom >= navY) navLight = isLight;
+          }
+          document.body.classList.toggle('nav-on-light', navLight);
+
+          // --- True colors vs blend ---------------------------------------
+          // mix-blend-mode: difference distorts the bar over coloured darks,
+          // so the SOLID bar (real colours) shows by default and the blended
+          // bar takes over for the fraction of the bar sitting on LIGHT
+          // (paper-white) surfaces — the selected-work stage and the footer's
+          // reveal window — where inversion is what keeps it visible. Both
+          // opacities share the same coverage number, so the handoff is a
+          // continuous crossfade at the edges.
+          var lightFrac = 0;
+          var barRect = wrap.getBoundingClientRect();
+          var barH = barRect.height || 1;
+          var lightEls = [
+            document.getElementById('selected-work'),
+            document.querySelector('.footer-reveal')
+          ];
+          var light = 0;
+          lightEls.forEach(function (lel) {
+            if (!lel) return;
+            var lr = lel.getBoundingClientRect();
+            var covTop = Math.max(barRect.top, lr.top);
+            var covBot = Math.min(barRect.bottom, lr.bottom);
+            light += Math.max(0, covBot - covTop);
+          });
+          lightFrac = clamp(light / barH, 0, 1);
+          wrap.style.opacity = (hideVert ? 0 : lightFrac).toFixed(3);
+          if (solidWrap) solidWrap.style.opacity = (hideVert ? 0 : 1 - lightFrac).toFixed(3);
         }
 
+        // --- Click navigation + hover labels -----------------------------
+        function goTo(y) {
+          if (window.__lenis) window.__lenis.scrollTo(y, { duration: 1.4 });
+          else window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+        function docTop(el) { return el.getBoundingClientRect().top + window.scrollY; }
+
+        function showTip(seg) {
+          if (!tip) return;
+          var label = seg.getAttribute('data-label');
+          if (!label) return;
+          var r = seg.getBoundingClientRect();
+          tip.textContent = label;
+          tip.style.top = (r.top + r.height / 2) + 'px';
+          tip.style.right = (window.innerWidth - wrap.getBoundingClientRect().left + 12) + 'px';
+          tip.classList.add('is-on');
+        }
+        function hideTip() { if (tip) tip.classList.remove('is-on'); }
+
+        function wire(seg, onClick) {
+          seg.addEventListener('click', onClick);
+          seg.addEventListener('mouseenter', function () { showTip(seg); });
+          seg.addEventListener('mouseleave', hideTip);
+        }
+
+        // Section segments jump to their section's top.
+        items.forEach(function (item) {
+          if (item === group) return;   // its markers are wired below
+          var id = item.getAttribute('data-section');
+          if (!id) return;
+          wire(item, function () {
+            var el = measureElFor(id);
+            if (el) goTo(id === 'home' ? 0 : docTop(el));
+          });
+        });
+
+        // Project markers jump to their slot in the selected-work runway.
+        subs.forEach(function (s, i) {
+          wire(s, function () {
+            var el = measureElFor('selected-work');
+            if (!el) return;
+            goTo(docTop(el) + (el.offsetHeight / cardCount) * i);
+          });
+        });
+
         function onScroll() {
+          hideTip();   // the bar moves under the cursor while scrolling
           if (!ticking) { ticking = true; requestAnimationFrame(update); }
         }
         window.addEventListener('scroll', onScroll, { passive: true });
@@ -1778,13 +1928,61 @@
       })();
     </script>
 
-    <!-- Vercel Web Analytics (static-site script version) -->
+    <!-- CTA card ("Have a project in mind?"): the heading, sub-line and button
+         all parallax at the SAME scroll speed as the card travels through the
+         viewport, so they move together as one block. -->
     <script>
-      window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+      (function () {
+        var card = document.getElementById('proj-cta');
+        if (!card) return;
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduce) return;
+        var SPEED = 0.12;   // same for all three
+        var items = [
+          { el: card.querySelector('.work-cta-title'),   speed: SPEED },
+          { el: card.querySelector('.work-cta-sub'),     speed: SPEED },
+          { el: card.querySelector('.projects-cta-btn'), speed: SPEED }
+        ].filter(function (i) { return i.el; });
+        if (!items.length) return;
+
+        var ticking = false;
+        function update() {
+          ticking = false;
+          var vh = window.innerHeight;
+          var cr = card.getBoundingClientRect();
+          // 0 when the card is centred in the viewport; grows (±) as it enters
+          // from below / leaves above. Each item scales it by its own speed.
+          var delta = (vh / 2) - (cr.top + cr.height / 2);
+          items.forEach(function (it) {
+            it.el.style.transform = 'translateY(' + (delta * it.speed).toFixed(1) + 'px)';
+          });
+        }
+        function onScroll() {
+          if (!ticking) { ticking = true; requestAnimationFrame(update); }
+        }
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onScroll, { passive: true });
+        update();
+      })();
     </script>
-    <script defer src="/_vercel/insights/script.js"></script>
-    <!-- Vercel Speed Insights -->
-    <script defer src="/_vercel/speed-insights/script.js"></script>
+
+    <!-- Vercel Web Analytics + Speed Insights. These endpoints only exist on
+         Vercel, so skip them on localhost / LAN to avoid 404s in the console. -->
+    <script>
+      (function () {
+        var h = location.hostname;
+        var isLocal = h === 'localhost' || h === '127.0.0.1' || h === '' ||
+          /^192\.168\./.test(h) || /^10\./.test(h) || /^172\.(1[6-9]|2\d|3[01])\./.test(h);
+        if (isLocal) return;
+        window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+        ['/_vercel/insights/script.js', '/_vercel/speed-insights/script.js'].forEach(function (src) {
+          var s = document.createElement('script');
+          s.defer = true;
+          s.src = src;
+          document.head.appendChild(s);
+        });
+      })();
+    </script>
 
   </body>
 </html>

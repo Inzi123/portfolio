@@ -1,13 +1,16 @@
 :root {
   color-scheme: dark;
-  --bg: #01040a;
+  --bg: #191717;
+  --bg-projects: #1c1917; /* solid backdrop behind Projects (warm charcoal) */
+  --bg-about: #171218;    /* solid backdrop behind About (warm plum) */
+  --card-bg: #101a28;     /* project deck card surface */
   --blue-deep: #0a1130;
   --blue-glow: #1f3bd6;
   --blue-soft: #2d52ff;
   --panel: rgba(13, 16, 32, 0.72);
   --panel-2: #0c1024;
-  --text: #c9c9c9;
-  --muted: #c9c9c9;
+  --text: #fefcd9;
+  --muted: #fefcd9;
   --line: rgba(255, 255, 255, 0.08);
   --accent: #ff4242;
   /* Shared content column — every section aligns to this width. The padding
@@ -16,11 +19,22 @@
   --content-pad: clamp(24px, 5vw, 64px);
 }
 
+/* Wide-desktop: give every section that aligns to the shared content column
+   more room. Only kicks in on large viewports, so tablet/mobile stay put. */
+@media (min-width: 1440px) {
+  :root { --content-max: 1240px; }
+}
+@media (min-width: 1800px) {
+  :root { --content-max: 1440px; }
+}
+
 * { box-sizing: border-box; }
 
 /* ---------- LOADING SCREEN ----------
    A 0→100 counter whose digits roll upward like an odometer, then the
-   overlay fades away to reveal the page. ~3s total. */
+   cover parts like a curtain: two halves peel outward, their inner-top
+   corners curving into big arcs as they go — the opening is widest at the
+   top and narrows to a point at the bottom centre. ~3.5s + 0.9s exit. */
 .loader {
   position: fixed;
   inset: 0;
@@ -29,67 +43,116 @@
   align-items: center;
   justify-content: center;
   padding: 0;
-  background: #01040a;
-  animation: loader-out 0.7s ease 3.5s forwards;
 }
 
-/* Film grain over the loader, matching the page grain. */
-.loader::after {
-  content: "";
+/* The two curtain halves. 51% wide each → a 2% centre overlap, so no seam
+   shows while they're closed. */
+.loader__half {
   position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.5;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
-  background-size: 200px 200px;
+  top: 0;
+  bottom: 0;
+  width: 51%;
+  background: #191717;
+  will-change: transform, border-radius;
 }
+
+.loader__half--l {
+  left: 0;
+  animation: curtain-l 0.9s cubic-bezier(0.76, 0, 0.24, 1) 3.5s forwards;
+}
+
+.loader__half--r {
+  right: 0;
+  animation: curtain-r 0.9s cubic-bezier(0.76, 0, 0.24, 1) 3.5s forwards;
+}
+
+/* The inner-top corner rounds off early in the run (the drapery curve),
+   then the half keeps sliding out carrying that curved edge with it. */
+@keyframes curtain-l {
+  0%   { transform: translateX(0); border-top-right-radius: 0 0; }
+  40%  { border-top-right-radius: 95% 120%; }
+  100% { transform: translateX(-102%); border-top-right-radius: 95% 120%; }
+}
+
+@keyframes curtain-r {
+  0%   { transform: translateX(0); border-top-left-radius: 0 0; }
+  40%  { border-top-left-radius: 95% 120%; }
+  100% { transform: translateX(102%); border-top-left-radius: 95% 120%; }
+}
+
+/* Loader grain removed. */
 
 /* The counter sits bottom-right; a fixed-height window clips the reel so
    only one number shows at a time. */
 .loader__counter {
   --digit-h: clamp(1.6rem, 4vw, 2.4rem);
   display: flex;
-  align-items: baseline;
+  /* The windows are identical boxes, so align them as boxes — baseline
+     alignment desyncs because the tens reel starts with an empty cell. */
+  align-items: center;
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1;
-  color: #c9c9c9;
+  color: #fefcd9;
   font-size: var(--digit-h);
+  font-variant-numeric: tabular-nums;
   position: relative;
   z-index: 1; /* keep digits above the grain layer */
 }
 
-/* Each place is its own digit. Only the digit that changes runs the
-   fade-swap (floats up + fades, new digit drops in from below); the others
-   stay still. */
-.loader__digit {
+/* Each place is a window that clips its reel. It is taller than one digit
+   (0.3em of bleed above and below — the JS offsets the reel to match) and a
+   gradient mask fades digits out toward the edges, so they dissolve in and
+   out instead of being chopped mid-glyph. Leading places start at zero
+   width and widen as their first digit rolls in, so the counter grows
+   smoothly instead of jumping when 9→10 or 99→100. */
+.loader__place {
   display: inline-block;
+  height: 1.6em;
+  overflow: hidden;
+  width: 0;
+  transition: width 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 30%, #000 70%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 30%, #000 70%, transparent);
+}
+
+.loader__place.is-on { width: 1ch; }
+
+/* Vertical strip of digits; JS moves it in whole-digit steps and this
+   transition eases each step, so digits always settle centered (aligned
+   across places) instead of hovering between positions. JS also drives
+   --reel-blur from the roll speed, a cheap motion blur that makes the
+   fast sweep read as a soft spin instead of flicking numbers. */
+.loader__reel {
+  display: block;
+  will-change: transform, filter;
+  filter: blur(var(--reel-blur, 0px));
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.loader__cell {
+  display: block;
+  height: 1em;
+  line-height: 1;
   text-align: center;
-}
-
-.loader__digit:empty { display: none; }   /* hide leading zeros */
-
-.loader__digit.is-swap {
-  animation: letter-swap 0.45s cubic-bezier(0.5, 0, 0.2, 1) both;
-}
-
-.loader__pct {
-  font-size: 0.4em;
-  margin-left: 0.1em;
-  color: #c9c9c9;
-  align-self: flex-start;
-  margin-top: 0.15em;
 }
 
 .loader.is-done { display: none; }
 
-@keyframes loader-out {
-  to { opacity: 0; filter: blur(12px); visibility: hidden; }
+/* The counter slips away just before the curtains part. */
+.loader__counter {
+  animation: loader-counter-out 0.3s ease 3.4s forwards;
+}
+
+@keyframes loader-counter-out {
+  to { opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .loader { animation: none; display: none; }
+  .loader,
+  .loader__half,
+  .loader__counter { animation: none; }
+  .loader { display: none; }
 }
 
 html {
@@ -117,6 +180,9 @@ img { max-width: 100%; }
   z-index: 10001;
   pointer-events: none;
   display: none;
+  /* Inverts against its backdrop like the progress bar: stays light over the
+     dark sections, flips dark over the white project cards so it's visible. */
+  mix-blend-mode: difference;
 }
 
 .cursor.is-active { display: block; }
@@ -138,21 +204,21 @@ body:has(.cursor.is-active) button { cursor: none; }
 .cursor__ring {
   width: 38px;
   height: 38px;
-  border: 1.5px solid rgba(201, 201, 201, 0.7);
+  border: 1.5px solid rgba(254, 252, 217, 0.7);
   transition: width 0.25s ease, height 0.25s ease, border-color 0.25s ease, opacity 0.25s ease;
 }
 
 .cursor__dot {
   width: 6px;
   height: 6px;
-  background: #c9c9c9;
+  background: #fefcd9;
 }
 
 /* Ring shrinks over interactive elements. */
 .cursor.is-shrink .cursor__ring {
   width: 18px;
   height: 18px;
-  border-color: rgba(201, 201, 201, 0.95);
+  border-color: rgba(254, 252, 217, 0.95);
 }
 
 .cursor.is-hidden .cursor__ring,
@@ -162,18 +228,16 @@ body:has(.cursor.is-active) button { cursor: none; }
 
 /* ---------- PAGE GRAIN ----------
    Fixed noise overlay above the background, below all content.
-   Uses the SVG #grain filter on a neutral fill. */
+   Above the nav's backdrop-filter (z-index:2000) so the grain isn't captured
+   and re-blurred by the fixed navbar. Same strong grain everywhere so the whole
+   page reads dark & even — no hard line where the hero ends. */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
-  /* Above all content (and the nav's backdrop-filter) so the grain isn't
-     captured and re-blurred by the fixed navbar. */
   z-index: 2000;
   pointer-events: none;
-  /* Same strong grain everywhere (was previously only on .hero::after), so the
-     whole page reads dark & even — no hard line where the hero ends. */
-  opacity: 0.3;
+  opacity: 0.42;
   mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
   background-size: 200px 200px;
@@ -182,24 +246,105 @@ body::before {
 /* ---------- HERO (full-screen, like reference) ---------- */
 .hero {
   position: relative;
-  min-height: 100vh;
+  /* Taller than the viewport: the text lives in the first 100vh (.hero-inner),
+     and the extra height below is the room where the smoke clears to white
+     before the Selected Projects stage. */
+  min-height: 130vh;
   display: flex;
   flex-direction: column;
-  padding: 28px clamp(24px, 5vw, 72px) 48px;
   /* No isolation / no opaque background here, so the page-wide fixed shader
      canvas (z-index:-2) shows through behind the hero content. */
 }
 
-/* Animated smoke/noise shader background — fixed behind the WHOLE page. */
-.hero-canvas {
+/* Smoke clears to white: a wash of the projects stage's off-white grows over
+   the bottom of the hero AS YOU SCROLL (driven by --p, the hero's scroll-exit
+   progress). It's invisible at the top so the light intro text stays readable,
+   ramps in only once the intro has faded, and reaches solid white right at the
+   hero's bottom — where the white stage rises to meet it, so there's no
+   hard line. */
+.hero::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(242, 240, 234, 0) calc(78% - var(--p, 0) * 54%),
+    #f2f0ea 94%
+  );
+}
+
+/* All the hero text + the OPEN-TO-WORK badge live here, in exactly the first
+   viewport, so they're all visible on load. The badge is absolute relative to
+   this block, so it stays within the 100vh too. */
+.hero-inner {
+  position: relative;
+  width: 100%;
+  /* Same shared content column as the topbar and every section. */
+  max-width: calc(var(--content-max) + 2 * var(--content-pad));
+  margin: 0 auto;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 28px var(--content-pad) 48px;
+}
+
+/* Solid backdrops for Projects + About, fixed BELOW the content over the
+   flat --bg base. JS crossfades them in with scroll and gives each section
+   its own color: Projects underneath, About faded in on top. */
+.section-bg {
   position: fixed;
   inset: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: -2;
-  display: block;
+  z-index: -1;
+  opacity: 0;
   pointer-events: none;
 }
+.section-bg--projects { background: var(--bg-projects); }
+.section-bg--about { background: var(--bg-about); }
+
+/* ---------- CURSOR GLOW ----------
+   A soft red halo pinned to the background layer that trails the pointer
+   with a lag (JS moves it via transform only — no repaints). Hidden until
+   the first mousemove, and on touch / reduced-motion. */
+.bg-glow {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 44vmax;
+  height: 44vmax;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 66, 66, 0.13) 0%, rgba(255, 66, 66, 0.05) 45%, transparent 70%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  will-change: transform;
+}
+.bg-glow.is-on { opacity: 1; }
+
+/* The CTA card's mirror of the halo: the card's photo is opaque, so the
+   page-wide glow (z -1) can't shine through it — this copy lives INSIDE
+   the card, clipped to it, and the same JS keeps it under the pointer.
+   The gradient MUST match .bg-glow exactly: when the circle straddles the
+   card's edge, the inside/outside halves meet seamlessly. */
+.cta-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  width: 44vmax;
+  height: 44vmax;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 66, 66, 0.13) 0%, rgba(255, 66, 66, 0.05) 45%, transparent 70%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  will-change: transform;
+}
+.cta-glow.is-on { opacity: 1; }
 
 
 .topbar {
@@ -208,7 +353,7 @@ body::before {
   position: fixed;
   top: 0;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(-50%) translateY(0);
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -239,60 +384,38 @@ body::before {
   inset: 0;
   border-radius: 0;
   pointer-events: none;
+  /* Hidden while the page rests at the very top; JS flags .is-on once you
+     scroll. Opacity lives on each layer (not the wrapper) so the
+     backdrop-filter keeps sampling the page instead of an isolated group. */
+  opacity: 0;
+  transition: opacity 0.4s ease;
 }
+
+.nav-blur.is-on .nav-blur__layer { opacity: 1; }
 
 /* Framer-style stack: mask uses `to top`, so the strongest blur sits at
    the BOTTOM of the strip (nearest the page) and fades out toward the top.
    Each band is a 4-stop window (transparent → solid → solid → transparent)
    climbing 12.5% per layer; blur doubles each step. */
+/* Reduced to 2 layers for scroll performance (backdrop-filter is expensive
+   and runs every scroll frame). The two bands FULLY overlap and both ramp
+   with long, soft gradients — no band closes off mid-strip, so the composite
+   blur climbs continuously from ~0 at the bottom edge to max at the top with
+   no visible seam. Light layer stays present all the way up; the strong layer
+   fades in gradually over most of the strip instead of hitting a plateau. */
 .nav-blur__layer:nth-child(1) {
-  backdrop-filter: blur(0.265625px);
-  -webkit-backdrop-filter: blur(0.265625px);
-  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0) 0%, #000 12.5%, #000 25%, rgba(0,0,0,0) 37.5%);
-  mask-image: linear-gradient(to top, rgba(0,0,0,0) 0%, #000 12.5%, #000 25%, rgba(0,0,0,0) 37.5%);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0) 0%, #000 40%, #000 100%);
+  mask-image: linear-gradient(to top, rgba(0,0,0,0) 0%, #000 40%, #000 100%);
 }
 .nav-blur__layer:nth-child(2) {
-  backdrop-filter: blur(0.53125px);
-  -webkit-backdrop-filter: blur(0.53125px);
-  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0) 12.5%, #000 25%, #000 37.5%, rgba(0,0,0,0) 50%);
-  mask-image: linear-gradient(to top, rgba(0,0,0,0) 12.5%, #000 25%, #000 37.5%, rgba(0,0,0,0) 50%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0) 25%, #000 100%);
+  mask-image: linear-gradient(to top, rgba(0,0,0,0) 25%, #000 100%);
 }
-.nav-blur__layer:nth-child(3) {
-  backdrop-filter: blur(1.0625px);
-  -webkit-backdrop-filter: blur(1.0625px);
-  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0) 25%, #000 37.5%, #000 50%, rgba(0,0,0,0) 62.5%);
-  mask-image: linear-gradient(to top, rgba(0,0,0,0) 25%, #000 37.5%, #000 50%, rgba(0,0,0,0) 62.5%);
-}
-.nav-blur__layer:nth-child(4) {
-  backdrop-filter: blur(2.125px);
-  -webkit-backdrop-filter: blur(2.125px);
-  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0) 37.5%, #000 50%, #000 62.5%, rgba(0,0,0,0) 75%);
-  mask-image: linear-gradient(to top, rgba(0,0,0,0) 37.5%, #000 50%, #000 62.5%, rgba(0,0,0,0) 75%);
-}
-.nav-blur__layer:nth-child(5) {
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0) 50%, #000 62.5%, #000 75%, rgba(0,0,0,0) 87.5%);
-  mask-image: linear-gradient(to top, rgba(0,0,0,0) 50%, #000 62.5%, #000 75%, rgba(0,0,0,0) 87.5%);
-}
-.nav-blur__layer:nth-child(6) {
-  backdrop-filter: blur(13px);
-  -webkit-backdrop-filter: blur(13px);
-  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0) 62.5%, #000 75%, #000 87.5%, rgba(0,0,0,0) 100%);
-  mask-image: linear-gradient(to top, rgba(0,0,0,0) 62.5%, #000 75%, #000 87.5%, rgba(0,0,0,0) 100%);
-}
-.nav-blur__layer:nth-child(7) {
-  backdrop-filter: blur(26px);
-  -webkit-backdrop-filter: blur(26px);
-  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0) 75%, #000 87.5%, #000 100%);
-  mask-image: linear-gradient(to top, rgba(0,0,0,0) 75%, #000 87.5%, #000 100%);
-}
-.nav-blur__layer:nth-child(8) {
-  backdrop-filter: blur(50px);
-  -webkit-backdrop-filter: blur(50px);
-  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0) 87.5%, #000 100%);
-  mask-image: linear-gradient(to top, rgba(0,0,0,0) 87.5%, #000 100%);
-}
+.nav-blur__layer:nth-child(n+3) { display: none; }
 
 
 .brand,
@@ -357,14 +480,12 @@ body::before {
 
 .hero-body {
   flex: 1;
-  max-width: 1400px;
   width: 100%;
-  margin: 0 auto;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
-  text-align: center;
+  align-items: flex-start;
+  text-align: left;
   padding: 40px 0;
 }
 
@@ -373,15 +494,14 @@ body::before {
    don't read as one block. */
 .hero-body,
 .hero-intro {
-  will-change: transform, filter, opacity;
-  transition: transform 0.15s linear, filter 0.15s linear, opacity 0.15s linear;
+  will-change: transform, opacity;
+  transition: transform 0.15s linear, opacity 0.15s linear;
 }
 
 /* Title: scales UP and drifts upward as it leaves. */
 .hero-body {
   transform-origin: center center;
   transform: translateY(calc(-40px * var(--p, 0))) scale(calc(1 + 0.22 * var(--p, 0)));
-  filter: blur(calc(16px * var(--p, 0)));
   opacity: calc(1 - 0.9 * var(--p, 0));
 }
 
@@ -389,36 +509,107 @@ body::before {
 .hero-intro {
   transform-origin: center center;
   transform: translateY(calc(50px * var(--p, 0))) scale(calc(1 - 0.06 * var(--p, 0)));
-  filter: blur(calc(10px * var(--p, 0)));
   opacity: calc(1 - var(--p, 0));
 }
 
-/* Badge scroll exit: blur + fade applied to the inner spin layer, so the
-   wrapper's slide-in opacity/transform stays independent. */
-.badge--open__spin {
-  filter: blur(calc(12px * var(--p, 0)));
-  transition: filter 0.15s linear;
+/* Badge scroll exit: the blur was removed — animating filter: blur() every
+   scroll frame is very expensive. The badge still fades via its wrapper. */
+
+/* ---------- HERO GLOWS ----------
+   Blurred red orbs floating behind the headline. Each is a radial gradient
+   of the accent red fading to transparent (pre-blurred look, no filter),
+   drifting slowly on a compositor-only transform loop. */
+.hero-glows {
+  position: absolute;
+  /* Full viewport width (the .hero), but only the first screen tall — the
+     orbs' % positions are designed against the 100vh view, not the taller
+     hero (which extends into the white fade below). */
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100vh;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.hero-glow {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 66, 66, 0.5) 0%, rgba(255, 66, 66, 0.18) 40%, transparent 70%);
+  will-change: transform;
+  animation: glow-drift 14s ease-in-out infinite alternate;
+}
+
+/* Mouse parallax: the pointer offset lands as --gx/--gy (px) on .hero-glows;
+   each orb translates by a different factor (one against the pointer) so the
+   layer reads as depth. `translate` composes with the transform animation. */
+.hero-glow--1 {
+  width: 46vw;
+  height: 46vw;
+  top: -10%;
+  right: -8%;
+  translate: calc(var(--gx, 0px) * -0.5) calc(var(--gy, 0px) * -0.5);
+}
+
+.hero-glow--2 {
+  width: 30vw;
+  height: 30vw;
+  bottom: 4%;
+  left: -10%;
+  opacity: 0.7;
+  animation-duration: 18s;
+  animation-delay: -6s;
+  translate: calc(var(--gx, 0px) * 0.8) calc(var(--gy, 0px) * 0.8);
+}
+
+.hero-glow--3 {
+  width: 18vw;
+  height: 18vw;
+  top: 30%;
+  left: 42%;
+  opacity: 0.45;
+  animation-duration: 11s;
+  animation-delay: -3s;
+  translate: calc(var(--gx, 0px) * 1.3) calc(var(--gy, 0px) * 1.3);
+}
+
+@keyframes glow-drift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(4vw, -3vh, 0) scale(1.12); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-glow { animation: none; }
 }
 
 .hero-title {
-  font-size: 82px;
-  line-height: 1.02;
+  font-size: clamp(6rem, 17.5vw, 19rem);
+  line-height: 0.9;
   letter-spacing: -0.04em;
   font-weight: 700;
   margin: 0;
-  text-align: center;
-  white-space: nowrap;
+  text-align: left;
+}
+
+.hero-subtitle {
+  font-size: clamp(1.1rem, 2vw, 1.6rem);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  font-weight: 500;
+  color: var(--muted);
+  margin: 12px 0 0;
+  text-align: left;
 }
 
 .hero-intro {
-  /* Sits at the bottom of the hero, centered horizontally. */
-  margin: 0 auto;
+  /* Sits at the bottom of the hero; .hero-inner already provides the shared
+     content column, so the intro just spans it. */
+  width: 100%;
   font-size: 24px;
   line-height: 1.45;
   font-weight: 500;
-  color: #c9c9c9;
-  max-width: 52ch;
-  text-align: center;
+  color: #fefcd9;
+  text-align: left;
 }
 
 .hero-intro .accent { color: var(--accent); }
@@ -447,7 +638,7 @@ body::before {
 .badge path { fill: none; stroke: none; }
 
 .badge text {
-  fill: #c9c9c9;
+  fill: #fefcd9;
   font-family: 'Cabinet Grotesk', 'Inter', Arial, sans-serif;
   font-size: 16px;
   font-weight: 400;
@@ -518,10 +709,12 @@ body::before {
 
 .badge--open {
   bottom: 8%;
-  left: clamp(24px, 5vw, 72px);
-  /* Slide-in from the left: starts off-screen + transparent, eases into
+  /* Right side now — the hero text (title + intro) is left-aligned, so the
+     badge balances the composition from the opposite corner. */
+  right: clamp(24px, 5vw, 72px);
+  /* Slide-in from the right: starts off-screen + transparent, eases into
      place when the hero enters view (toggled by .is-revealed). */
-  transform: translateX(-120px);
+  transform: translateX(120px);
   opacity: 0;
   transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.7s ease;
 }
@@ -584,24 +777,328 @@ body::before {
   grid-column: 1 / -1;
 }
 
-/* ---------- PROJECTS — pinned horizontal carousel (GSAP) ----------
-   #work-section pins to the viewport; .work-track translates left through the
-   panels as you scroll. Each panel is 50vw; project cards have a vertical
-   divider on their left edge. Full-bleed (escapes the page-shell column). */
+/* ---------- SELECTED PROJECTS (white stage, red blob, rising slides) ----------
+   The section is a tall scroll runway on the projects' paper white;
+   .sw-sticky pins the stage for its whole length. The title view shows
+   "Selected ⬮ Projects" with the red blob centred between the words. Each
+   project pair is a full-screen SLIDE that rises from the bottom and covers
+   what came before — same feel as the old stacking cards, scrubbed by JS
+   (translateY from scroll progress). The blob paints ABOVE the slides, so
+   it stays put in the centre the whole way through. */
+#selected-work {
+  position: relative;
+  height: 380vh;
+  background: #f2f0ea;
+  --sw-blob-w: clamp(90px, 10vw, 170px);
+}
+
+.sw-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The two title words flank the blob: the flex gap reserves its slot. JS
+   scrubs them in from the screen edges as the section enters view (they
+   converge on the star); later the first slide covers them as it rises. */
+.sw-title {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--sw-blob-w) + clamp(28px, 4vw, 64px));
+  font-size: clamp(3rem, 8.5vw, 8.5rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: #101010;
+  white-space: nowrap;
+}
+
+.sw-word {
+  display: inline-block;
+  will-change: transform;
+}
+
+/* The red square full stop after "Projects" — like the old marker's dot. */
+.sw-dot {
+  display: inline-block;
+  width: 0.13em;
+  height: 0.13em;
+  margin-left: 0.07em;
+  background: var(--accent);
+}
+
+/* The star: accent red, dead-centre, above the slides (z-index). Static —
+   it doesn't rotate; only its size eases between states. */
+.sw-blob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 3;
+  width: var(--sw-blob-w);
+  transform: translate(-50%, -50%);
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+
+.sw-blob svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  fill: var(--accent);
+  transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* A touch larger while it anchors the title; once the slides take over
+   (the words are gone) it eases down to a smaller size. */
+.sw--words .sw-blob svg { transform: scale(1.12); }
+#selected-work:not(.sw--words) .sw-blob svg { transform: scale(0.72); }
+
+/* Project slides: opaque full-screen layers that rise from below (JS scrubs
+   translateY 100% → 0 with scroll). Each a slightly different paper tint so
+   the pile reads as distinct layers — like the old stacking cards. */
+.sw-pair {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* The slide's backdrop is full-bleed, but the cards align to the shared
+     content column: side padding equals the column's own margins (the
+     centring leftover once the viewport outgrows --content-max, otherwise
+     the standard --content-pad gutter). */
+  padding: 0 max(var(--content-pad), calc((100vw - var(--content-max)) / 2));
+  transform: translateY(100%);
+  will-change: transform;
+}
+.sw-pair--1 { z-index: 1; background: #edebe4; }
+.sw-pair--2 { z-index: 2; background: #f0eee7; }
+
+/* Narrower cards buy centre air: outer edges stay pinned to the content
+   column (space-between), so all the slack lands around the star. */
+.sw-project {
+  width: clamp(280px, 30vw, 520px);
+}
+
+.sw-project .project-visual {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+/* Hover: a single smaller copy of the image (same URL, passed as --img
+   inline) fades in dead-centre over the full-size one — picture-in-picture.
+   The pseudo-element IS the small copy (not a full overlay), so its drop
+   shadow hugs it and lifts it off the big image. Sits under the "See
+   project" chip (z-index 2). */
+.sw-project .project-visual::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  width: 52%;
+  aspect-ratio: 16 / 10;
+  background-image: var(--img);
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(1.06);
+  transition: opacity 0.35s ease, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sw-project .project-visual:hover::after {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.sw-project__meta {
+  margin: 14px 2px 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  color: #1a1a1a;
+}
+.sw-project__name {
+  font-size: clamp(1.1rem, 1.6vw, 1.45rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.sw-project__num {
+  font-size: 0.85rem;
+  opacity: 0.6;
+  letter-spacing: 0.08em;
+}
+
+/* "View project" — reuses the old cards' .card-cta underline style. */
+.sw-project__cta {
+  display: inline-block;
+  margin-top: 14px;
+}
+
+/* ---------- PROJECTS: sticky stacking cards (pure CSS) ----------
+   Each .stacking-card is sticky at top:0 and full-height, so the next card
+   (later in the DOM → painted on top) rises and covers the previous one as
+   you scroll. No JS; no overflow:hidden on ancestors or the effect breaks. */
 #work-section {
   position: relative;
   width: 100%;
-  height: 100vh;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-.work-track {
+/* Intro heading — scrolls away before the first card sticks. */
+.services-header {
+  width: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: clamp(56px, 12vh, 130px) var(--content-pad) clamp(18px, 3vh, 30px);
   display: flex;
-  flex-wrap: nowrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+}
+.services-eyebrow { margin: 0 0 10px; }
+.services-count {
+  font-size: 0.95rem;
+  color: var(--muted);
+  opacity: 0.55;
+  white-space: nowrap;
+}
+.section-divider {
+  width: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  height: 1px;
+  background: var(--line);
+}
+
+/* The stacking cards. */
+.stacking-card {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
   align-items: center;
-  height: 100%;
-  width: max-content;
+  background: var(--card-bg);
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  /* Promote each card to its own compositing layer and limit repaint scope, so
+     the sticky stack composites cleanly instead of repainting on scroll. */
   will-change: transform;
+  contain: layout style;
+}
+/* CTA: mountain-sunrise photo under a black gradient (darkest on the left,
+   where the left-aligned text sits) so the copy stays legible. */
+.stacking-card--cta {
+  background-color: #14120f;   /* fallback while the image loads */
+  background-image:
+    /* fade the photo's edges into the dark sections around it, so there's no
+       hard edge where the photo starts and ends */
+    linear-gradient(180deg, rgba(25, 23, 23, 0) 60%, rgba(25, 23, 23, 0.8) 85%, #1c1917 100%),
+    /* black gradient, darkest on the left where the text sits */
+    linear-gradient(90deg, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.7) 45%, rgba(0, 0, 0, 0.32) 100%),
+    url('cta-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-top: none;            /* drop the faint top divider line */
+  overflow: clip;              /* keep the .cta-glow halo inside the card */
+}
+
+.card-inner {
+  width: 100%;
+  /* Match the content width of the other sections: the inner column lands on
+     --content-max once its --content-pad gutters are subtracted. */
+  max-width: calc(var(--content-max) + 2 * var(--content-pad));
+  margin: 0 auto;
+  padding: clamp(72px, 12vh, 130px) var(--content-pad);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(32px, 5vw, 80px);
+  align-items: center;
+}
+
+.card-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: clamp(14px, 2.2vh, 22px);
+  /* Let this column shrink to its 1fr track instead of forcing extra width
+     from long titles — otherwise the media column (and its image) would end
+     up a different size on each card depending on the title length. */
+  min-width: 0;
+}
+.card-number {
+  margin: 0;
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  color: #5a5a5a;
+  opacity: 0.85;
+}
+.card-info h3 {
+  margin: 0;
+  font-size: clamp(2.6rem, 6.5vw, 6rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 0.9;
+  color: #1a1a1a;
+  overflow-wrap: anywhere;
+}
+.card-desc {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: #3a3a3a;
+  max-width: 42ch;
+}
+.card-cta {
+  margin-top: 6px;
+  color: #1a1a1a;
+  text-decoration: none;
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.35);
+  padding-bottom: 4px;
+  transition: color 0.3s ease, border-color 0.3s ease;
+}
+.card-cta:hover { color: #000; border-color: #000; }
+
+/* Media column reuses .project-visual (keeps the hover "See project" chip). */
+.card-media {
+  overflow: clip;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  aspect-ratio: 4 / 3;
+}
+.card-media .project-visual {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+.card-media .project-visual img {
+  height: 100%;
+  aspect-ratio: auto;   /* fill the 4/3 media box */
+  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.card-media .project-visual:hover img { transform: scale(1.05); }
+
+/* CTA card: content aligned to the left, like the other cards. Positioned
+   so it paints above the card's .cta-glow halo. */
+.card-inner--cta {
+  grid-template-columns: 1fr;
+  justify-items: start;
+  text-align: left;
+  position: relative;
+  z-index: 1;
 }
 
 .work-panel {
@@ -624,14 +1121,14 @@ body::before {
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.05;
-  color: #c9c9c9;
+  color: #fefcd9;
 }
 
 .work-subtitle {
   margin: 16px 0 0;
   font-size: 1.05rem;
   line-height: 1.5;
-  color: #c9c9c9;
+  color: #fefcd9;
   max-width: 42ch;
 }
 
@@ -730,14 +1227,14 @@ body::before {
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.05;
-  color: #c9c9c9;
+  color: #fefcd9;
 }
 
 .work-cta-sub {
   margin: 0;
   font-size: 1.05rem;
   line-height: 1.5;
-  color: #c9c9c9;
+  color: #fefcd9;
   max-width: 40ch;
 }
 
@@ -747,33 +1244,14 @@ body::before {
   text-decoration: none;
 }
 
-/* Mobile: no pin, no horizontal scroll — stack the panels vertically. */
+/* Mobile: the stacking cards go single-column (media on top). */
 @media (max-width: 760px) {
-  #work-section {
-    width: auto;
-    margin-left: 0;
-    height: auto;
-    overflow: visible;
+  .card-inner {
+    grid-template-columns: 1fr;
+    gap: 28px;
   }
-  .work-track {
-    flex-direction: column;
-    width: 100%;
-    align-items: stretch;
-    transform: none !important;
-  }
-  .work-panel {
-    flex: none;
-    width: 100%;
-    height: auto;
-    padding: 48px 0;
-    justify-content: flex-start;
-  }
-  .work-card__line { display: none; }
-  .work-card + .work-card .work-card__inner,
-  .work-card .work-card__inner {
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
-    padding-top: 40px;
-  }
+  .card-media { order: -1; }
+  .card-info h3 { font-size: clamp(2.4rem, 12vw, 4rem); }
 }
 
 .eyebrow,
@@ -819,7 +1297,7 @@ body::before {
   background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
-  color: #c9c9c9;
+  color: #fefcd9;
   font-size: 0.82rem;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -852,7 +1330,7 @@ body::before {
   margin: 0;
   font-size: 1rem;
   line-height: 1.4;
-  color: #c9c9c9;
+  color: #fefcd9;
   max-width: 18ch;
 }
 
@@ -862,7 +1340,7 @@ body::before {
   margin: 0;
   letter-spacing: -0.02em;
   font-weight: 700;
-  color: #c9c9c9;
+  color: #fefcd9;
 }
 
 /* Tags read as a single inline string separated by · dots */
@@ -875,7 +1353,7 @@ body::before {
   font-size: 0.95rem;
   letter-spacing: 0.06em;
   font-weight: 600;
-  color: #c9c9c9;
+  color: #fefcd9;
 }
 
 .tags span {
@@ -885,11 +1363,11 @@ body::before {
 .tags span + span::before {
   content: "·";
   margin-right: 10px;
-  color: #c9c9c9;
+  color: #fefcd9;
 }
 
 .location {
-  color: #c9c9c9;
+  color: #fefcd9;
   font-size: 1.05rem;
   margin: 0;
 }
@@ -912,12 +1390,12 @@ body::before {
 .project-spotlight .project-copy {
   font-size: 1.12rem;
   line-height: 1.5;
-  color: #c9c9c9;
+  color: #fefcd9;
   margin: 0;
 }
 
 .project-spotlight .project-copy strong {
-  color: #c9c9c9;
+  color: #fefcd9;
   font-weight: 700;
 }
 
@@ -930,11 +1408,11 @@ body::before {
   flex: 0 0 auto;
   white-space: nowrap;
   text-decoration: none;
-  color: #c9c9c9;
+  color: #fefcd9;
   cursor: pointer;
 }
 
-/* The marker: a c9c9c9 ring (stroke only) that grows on hover, pushing the
+/* The marker: a fefcd9 ring (stroke only) that grows on hover, pushing the
    text to the right. The dot itself takes layout width, so the flex row
    reflows and the text shifts. Fixed height keeps the row height steady. */
 .project-link__dot {
@@ -956,7 +1434,7 @@ body::before {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  border: 1px solid #c9c9c9;
+  border: 1px solid #fefcd9;
   background: transparent;
   transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1),
               height 0.45s cubic-bezier(0.22, 1, 0.36, 1);
@@ -1025,21 +1503,128 @@ body::before {
   max-width: var(--content-max);
   margin: 0 auto;
   padding: 12vh 0;
-  display: grid;
-  grid-template-columns: 0.8fr 1.2fr;
-  align-items: start;
-  gap: clamp(24px, 4vw, 64px);
+  display: block;                 /* single centred column */
+  position: relative;             /* anchor for the floating photos */
   background: transparent;
-  /* Subtle divider above the About section. */
+  /* No top divider — the CTA photo above fades straight into this section. */
   border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 0;
   backdrop-filter: none;
 }
 
-.about-text {
+/* Centred bio, with photos floating in the side gutters. Position:relative so
+   the absolutely-positioned floats anchor to this block; min-height gives them
+   a tall stage to spread across. */
+.about-intro {
+  position: relative;
+  min-height: clamp(520px, 74vh, 820px);
   display: grid;
-  gap: 10px;
+  place-items: center;
+  padding: clamp(24px, 6vh, 80px) 0;
+}
+
+.about-text {
+  position: relative;
+  z-index: 1;                     /* bio reads above the floating photos */
+  display: grid;
+  gap: 18px;
+  max-width: 620px;               /* reading width */
+  margin: 0 auto;                 /* block centred on the page */
+  text-align: left;               /* lines read left-aligned */
+}
+
+/* ---------- FLOATING ABOUT PHOTOS (parallax) ---------- */
+/* Full-bleed stage spanning the WHOLE About section (body already clips
+   overflow-x) so the photos sit large near the screen edges and are spread
+   from the top of the bio down past the info panels. */
+.about-floats {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+  z-index: 0;
+  pointer-events: none;           /* clicks/hover pass through to the content */
+}
+.about-float {
+  position: absolute;
+  width: clamp(170px, 16vw, 290px);
+  /* Parallax offset (set per-frame by JS) lives on the OUTER element so it
+     never fights the reveal/rotation transform on the <img> inside. */
+  transform: translateY(var(--py, 0px));
+  opacity: 0;
+  transition: opacity 1.6s ease;
+  will-change: transform, opacity;
+  /* Re-enable events just over the photo itself (the parent .about-floats
+     is pointer-events:none so the rest of the layer passes through to the
+     text underneath) so hovering a photo can trigger the color reveal. */
+  pointer-events: auto;
+}
+.about-float.is-in { opacity: 0.9; }
+
+/* Soft reveal (same language as the old About portrait): each photo starts
+   behind a wide, gently-closed band with a slight zoom; on .is-in the band
+   opens and the zoom settles — slow and gradual, matching the site's overall
+   soft pacing. Kept subtle on purpose (wide starting band, light zoom) so it
+   reads as a soft fade-open rather than a dramatic paper-fold/curtain.
+   The open state's clip expands PAST the box (-120px) so the border and drop
+   shadow aren't clipped once the photo is fully revealed. */
+.about-float img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+  aspect-ratio: 4 / 5;
+  border-radius: 0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  clip-path: inset(32% 0 32% 0);
+  transform: rotate(var(--rot, 0deg)) scale(1.15);
+  filter: grayscale(1);
+  cursor: pointer;
+  transition: clip-path 2.6s cubic-bezier(0.19, 1, 0.22, 1),
+              transform 3.6s cubic-bezier(0.19, 1, 0.22, 1),
+              filter 0.5s ease;
+  will-change: clip-path, transform, filter;
+}
+/* Even-numbered photos open sideways instead, for variety. */
+.about-float--2 img,
+.about-float--4 img { clip-path: inset(0 32% 0 32%); }
+.about-float.is-in img {
+  clip-path: inset(-120px -120px -120px -120px);
+  transform: rotate(var(--rot, 0deg)) scale(1);
+}
+.about-float:hover img { filter: grayscale(0); }
+
+/* Spread down the whole section, near the screen edges, alternating sides +
+   varied crops so one photo reads as several shots. A couple are extra-large. */
+.about-float--1 { top: 4%;  left: clamp(8px, 2.5vw, 70px);  width: clamp(200px, 19vw, 340px); }
+.about-float--1 img { aspect-ratio: 4 / 5; object-position: 50% 20%; }
+.about-float--2 { top: 18%; right: clamp(8px, 2.5vw, 70px); }
+.about-float--2 img { aspect-ratio: 1 / 1;  object-position: 38% 42%; }
+.about-float--3 { top: 40%; left: clamp(4px, 1.5vw, 40px); }
+.about-float--3 img { aspect-ratio: 3 / 4;  object-position: 50% 62%; }
+.about-float--4 { top: 60%; right: clamp(20px, 6vw, 110px); width: clamp(200px, 19vw, 340px); }
+.about-float--4 img { aspect-ratio: 4 / 5; object-position: 50% 30%; }
+/* Sits high enough that, even with its photo height + parallax drift, it
+   finishes well before the section's bottom edge (no clipping needed). */
+.about-float--5 { top: 72%; left: clamp(20px, 6vw, 110px); }
+.about-float--5 img { aspect-ratio: 4 / 5; object-position: 50% 55%; }
+
+/* Not enough side room for the big floats below this width — hide them. */
+@media (max-width: 1100px) {
+  .about-floats { display: none; }
+  .about-intro { min-height: 0; padding: 0; }
+}
+
+/* Space between the centred intro and the info panels below it. Constrained to
+   the same reading width as the bio, and centred to match it. */
+#about > .info-grid {
+  max-width: 620px;
+  margin: clamp(48px, 9vh, 110px) auto 0;
+  position: relative;
+  z-index: 1;                     /* panels read above the floating photos */
 }
 
 /* Word-cascade reveal: each word starts shifted down + transparent and
@@ -1057,11 +1642,54 @@ body::before {
   transform: translateY(0);
 }
 
+/* Hero title letters: split per LETTER, so the cascade sweeps across the
+   name character by character — each drops in with a small tilt and rises
+   back out the same way (transitions run in both directions). */
+.hero-title .reveal-word {
+  transform: translateY(0.45em) rotate(4deg);
+  transform-origin: bottom left;
+  transition: opacity 0.6s ease, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: calc(var(--i, 0) * 0.045s);
+}
+
+.hero-title.reveal-on .reveal-word {
+  opacity: 1;
+  transform: translateY(0) rotate(0deg);
+}
+
+/* Hover scramble: while JS cycles a letter through random symbols it
+   flashes accent red and jitters (steps() so it snaps, not eases). */
+.hero-letter.is-scrambling {
+  color: var(--accent);
+  animation: letter-glitch 0.2s steps(2, end) infinite;
+}
+
+@keyframes letter-glitch {
+  0%   { transform: translate(0.01em, -0.015em) skewX(-3deg); }
+  100% { transform: translate(-0.012em, 0.01em) skewX(2.5deg); }
+}
+
+/* Whole-block reveal for long text (About paragraphs, panels) — one element
+   animates instead of hundreds of per-word spans. */
+.reveal-block {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.reveal-block.reveal-on {
+  opacity: 1;
+  transform: none;
+}
+
 .about-text p {
   font-size: 24px;
   line-height: 1.6;
   margin: 0;
 }
+
+/* Words of the About bio (split by JS): inline-block so each one can lift
+   and brighten individually in the scroll-scrubbed reading reveal. */
+.about-word { display: inline-block; }
 
 .about-text .eyebrow {
   font-size: 0.8rem;
@@ -1074,16 +1702,39 @@ body::before {
   position: sticky;
   top: 12vh;
   overflow: hidden;
+  aspect-ratio: 1 / 1;        /* square box — image fills it, no matter its size */
+  /* Cinematic reveal: closed to a centre slit + hidden by default; opens as it
+     enters view and reverses on the way out (see the About photo script). */
+  clip-path: inset(46% 0 46% 0);
+  opacity: 0;
+  transition: clip-path 1.7s cubic-bezier(0.22, 1, 0.36, 1),
+              opacity 1.1s ease;
+  will-change: clip-path, opacity;
+}
+.about-visual.reveal-in {
+  clip-path: inset(0% 0 0% 0);
+  opacity: 1;
 }
 
 .about-visual img {
   width: 100%;
+  height: 100%;               /* fill the square container above */
   display: block;
-  aspect-ratio: 1 / 1;        /* square — shorter than the old 4:5 portrait */
-  object-fit: cover;
-  /* Greyscale by default, fades to full color on hover. */
+  object-fit: cover;          /* crop the 700×938 portrait to the square */
+  /* Greyscale by default, fades to full color on hover. Also eases from a
+     slight zoom to 1:1 as the photo reveals (and back out as it leaves). */
   filter: grayscale(1);
-  transition: filter 0.5s ease;
+  transform: scale(1.25);
+  transition: filter 0.5s ease,
+              transform 2.1s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+.about-visual.reveal-in img {
+  transform: scale(1);
+  /* Once the reveal has finished, the photo "develops" from grey to colour. */
+  filter: grayscale(0);
+  transition: transform 2.1s cubic-bezier(0.22, 1, 0.36, 1),
+              filter 0.7s ease 0.45s;  /* colour develops a touch later */
 }
 
 .about-visual:hover img {
@@ -1091,15 +1742,7 @@ body::before {
 }
 
 @media (max-width: 900px) {
-  .about-card {
-    grid-template-columns: 1fr;
-    gap: 24px;
-    padding: 64px 0;
-  }
-  .about-visual {
-    position: static;
-    order: -1;
-  }
+  .about-card { padding: 64px 0; }
   .about-text p { font-size: 1.1rem; }
 }
 
@@ -1161,7 +1804,7 @@ body::before {
 
 .panel span,
 .panel small {
-  color: #c9c9c9;
+  color: #fefcd9;
 }
 
 .stack-list {
@@ -1175,79 +1818,145 @@ body::before {
   gap: 4px;
 }
 
-/* Footer: no panel background. The name reads huge, with the social
-   links stacked below it. */
+/* ---------- FOOTER REVEAL (emerge from the dark) ----------
+   .footer-reveal is a clipping window the exact height of the footer.
+   Scrubbed by GSAP: the footer content rises from below at a fraction of
+   the scroll speed (behind-the-page parallax) while the uniform shadow
+   (.footer-shade) clears — the footer surfaces out of the dark in step
+   with the scroll. Without GSAP the footer scrolls in normally and the
+   overlay stays hidden (display:none until .fr-armed). */
+.footer-reveal {
+  overflow: clip;
+  position: relative;
+}
+
+.footer-shade { display: none; }
+
+.fr-armed .footer-shade { display: block; }
+
+/* Uniform darkness over the footer content; GSAP scrubs its opacity
+   0.6 → 0, so the content brightens as it emerges. */
+.footer-shade {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: #191717;
+  pointer-events: none;
+  will-change: opacity;
+}
+
 .footer-card {
-  /* Match the content width of the other sections (centred, same margins). */
+  /* Content (links, name) stays aligned to the same column as every other
+     section. The background itself goes full-bleed via ::before below. */
   max-width: calc(var(--content-max) + 2 * var(--content-pad));
   width: 100%;
   margin: 0 auto;
   padding: clamp(48px, 8vh, 90px) var(--content-pad) 28px;
-  min-height: 70vh;        /* roomy, but not full-screen */
+  /* Compact lower layer — enough for the columns + the giant name without
+     a full screen of blank white. The reveal scrub adapts to any height. */
+  min-height: 70vh;
+  min-height: 70svh;
   /* Container context so the giant name can size off the footer's OWN width
      (not the viewport) and always span it without overflowing. */
   container-type: inline-size;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  justify-content: space-between;   /* nav/name up top, links at the bottom */
+  justify-content: space-between;   /* links up top, name at the bottom */
   gap: 28px;
-  background: transparent;
   border: none;
   border-radius: 0;
   backdrop-filter: none;
   /* Slide up from below — no fade, the footer stays solid as it moves in. */
   transform: translateY(120px);
   transition: transform 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+  /* z-index (not just position) forces a new stacking context, so the
+     full-bleed ::before's z-index:-1 is scoped locally and can't slip
+     behind the page's own fixed dark backgrounds. */
+  position: relative;
+  z-index: 0;
+}
+
+/* Paper white, matching the Projects section's light cards — a deliberate
+   dark→light close, same language already used elsewhere on the page.
+   Full-bleed (same left:50%/100vw/translateX(-50%) idiom as .about-floats)
+   so the white spans the whole viewport instead of stopping at the content
+   column's margins. */
+.footer-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+  background: #f2f0ea;
+  z-index: -1;
 }
 
 .footer-card.is-visible {
   transform: translateY(0);
 }
 
-/* Top row: huge name on the left, "Let's connect" CTA on the right. */
+/* Once GSAP takes over the card's position (scroll-scrubbed, see the footer
+   name cascade script), drop this transition so it doesn't fight the scrub
+   with its own 1.4s timing — same pattern as .links-scrub below. */
+.footer-card.card-scrub {
+  transition: none;
+}
+
+/* Bottom row: the giant name, spanning the full footer width below the
+   link columns (order: 1 puts it after .footer-cols). */
 .footer-top {
   width: 100%;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 24px;
-  order: -1;                /* name sits at the TOP of the footer */
+  flex-wrap: wrap;
+  order: 1;                 /* name sits at the BOTTOM of the footer */
 }
 
-.footer-name {
+/* Specificity note: `.footer-card p` (below, shared with other sections)
+   is (0,1,1) and .footer-name alone is (0,1,0) — it would silently lose the
+   color fight. Scoping to `.footer-card .footer-name` (0,2,0) wins instead. */
+.footer-card .footer-name {
   font-weight: 700;
   margin: 0;
   width: 100%;
   max-width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  color: var(--text);
+  color: #101010;
   letter-spacing: -0.04em;
   line-height: 0.95;
+  /* The literal space between the two <span>s is a direct text-node child
+     of THIS element, not of .footer-name__first/__last — so it only renders
+     at the huge scale if the size lives here too (the children's own
+     font-size only covers their own letters, not that sibling text node).
+     Sized so the JOINED "Lucas Inzirillo" (one line, normal word space)
+     nearly spans the footer width without wrapping. */
+  font-size: clamp(3rem, 12.5cqw, 11rem);
+  /* Was flex + justify-content:space-between, pushing "Lucas" and
+     "Inzirillo" to opposite edges of the footer. Normal block flow instead,
+     so the two words read together as one name — the literal space already
+     in the markup ("Lucas</span> <span>Inzirillo") is what separates them. */
+  display: block;
   /* Keep the huge name inside the footer horizontally, but NEVER clip the
      vertical rise of the cascading letters. */
   overflow-x: clip;
   overflow-y: visible;
-}
-.footer-name__last { text-align: right; }
-
-@media (max-width: 760px) {
-  .footer-top {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 20px;
-  }
 }
 
 /* ---------- CONTACT FORM ---------- */
 .contact-section {
   max-width: calc(var(--content-max) + 2 * var(--content-pad));
   margin: 0 auto;
-  padding: 12vh var(--content-pad) 8vh;
+  padding: 10vh var(--content-pad) 8vh;
   border-top: 1px solid rgba(255, 255, 255, 0.16);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  /* Give the section real presence: about a viewport tall, content centred. */
+  min-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .contact-inner {
@@ -1271,7 +1980,7 @@ body::before {
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.02;
-  color: #c9c9c9;
+  color: #fefcd9;
 }
 
 .contact-form {
@@ -1326,14 +2035,14 @@ body::before {
 
 .field input:focus,
 .field textarea:focus {
-  border-bottom-color: #c9c9c9;
+  border-bottom-color: #fefcd9;
 }
 
 .field label {
   position: absolute;
   left: 2px;
   top: 28px;
-  color: rgba(201, 201, 201, 0.5);
+  color: rgba(254, 252, 217, 0.5);
   font-size: 1.05rem;
   pointer-events: none;
   transform-origin: left top;
@@ -1346,7 +2055,7 @@ body::before {
 .field input:not(:placeholder-shown) + label,
 .field textarea:not(:placeholder-shown) + label {
   transform: translateY(-26px) scale(0.78);
-  color: #c9c9c9;
+  color: #fefcd9;
   letter-spacing: 0.06em;
 }
 
@@ -1360,7 +2069,7 @@ body::before {
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 999px;
   padding: 14px 26px;
-  color: #c9c9c9;
+  color: #fefcd9;
   font: inherit;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -1423,9 +2132,9 @@ body::before {
 }
 
 .contact-submit:hover {
-  background: #c9c9c9;
+  background: #fefcd9;
   color: #01040a;
-  border-color: #c9c9c9;
+  border-color: #fefcd9;
 }
 
 /* Resting (right) arrow is red; the incoming (left) hover arrow matches the
@@ -1445,7 +2154,7 @@ body::before {
 .contact-status {
   margin: 0;
   font-size: 0.9rem;
-  color: #c9c9c9;
+  color: #fefcd9;
 }
 
 .contact-status:empty { display: none; }
@@ -1459,9 +2168,12 @@ body::before {
 .footer-name__first,
 .footer-name__last {
   display: inline;                 /* same line */
-  /* Sized off the footer's own width (cqw) so the name spans it edge-to-edge
-     with space-between, never overflowing the limited content column. */
-  font-size: clamp(4rem, 15cqw, 13rem);
+  /* Sized off the footer's own width (cqw) so the joined name fills it
+     without overflowing. Must match .footer-card .footer-name's font-size
+     exactly — that parent rule sizes the literal space between these two
+     spans, so a mismatch would make the gap look mis-sized next to the
+     letters. */
+  font-size: clamp(3rem, 12.5cqw, 11rem);
   font-weight: 700;                /* both same weight */
   line-height: 1;
 }
@@ -1483,7 +2195,7 @@ body::before {
 /* .footer-links is now a .footer-col (vertical) — see .footer-col rule. */
 
 .footer-card a {
-  color: #c9c9c9;
+  color: #1a1a1a;
   font-size: 20px;
   font-weight: 500;
 }
@@ -1501,6 +2213,20 @@ body::before {
   .badge { display: none; }
   .hero-intro { max-width: 100%; }
   .side-card { border-radius: 18px; }
+
+  /* Selected projects: the pair stacks vertically; the blob shrinks and
+     dims behind the cards while they're up. */
+  #selected-work { height: 340vh; --sw-blob-w: 64px; }
+  .sw-title { font-size: clamp(2.1rem, 9.5vw, 3.2rem); gap: calc(var(--sw-blob-w) + 18px); }
+  .sw-pair {
+    flex-direction: column;
+    justify-content: center;
+    gap: 22px;
+    padding: 0 var(--content-pad);
+  }
+  .sw-project { width: min(88vw, 480px); }
+  .sw--p1 .sw-blob,
+  .sw--p2 .sw-blob { opacity: 0.25; }
 }
 
 /* ============================================================
@@ -1519,7 +2245,7 @@ body::before {
   /* Hero: title + intro fluid so they never overflow. */
   .hero { padding: 24px 20px 40px; }
   .hero-title {
-    font-size: clamp(2.2rem, 12vw, 3.4rem);
+    font-size: clamp(3.4rem, 19vw, 5.4rem);
     white-space: normal;          /* allow wrapping on small screens */
   }
   .hero-intro { font-size: 1.05rem; padding: 0 4px; }
@@ -1538,9 +2264,12 @@ body::before {
      capped so it doesn't dominate the screen on phones. */
   .about-card { padding: 56px 0; }
   .about-text p { font-size: 1.05rem; }
-  .about-visual img {
-    aspect-ratio: auto;      /* don't derive height from full width */
+  .about-visual {
+    aspect-ratio: auto;      /* drop the square so it doesn't fill the phone */
     height: 240px;           /* fixed, compact height */
+  }
+  .about-visual img {
+    height: 100%;
     object-fit: cover;
   }
 
@@ -1562,6 +2291,9 @@ body::before {
 
   /* Footer: name scales down so it fits the viewport width. */
   .footer-card { padding: 40px 0 56px; }
+  /* Matches .footer-name__first/__last below — see the "must match" note
+     on the desktop rule for why (this sizes the space between the words). */
+  .footer-card .footer-name { font-size: clamp(2.6rem, 14vw, 4rem); }
   .footer-name__first,
   .footer-name__last { font-size: clamp(2.6rem, 14vw, 4rem); }
   .footer-card a { font-size: 16px; }
@@ -1595,7 +2327,7 @@ body::before {
   align-items: center;
   gap: 8px;
   text-decoration: none;
-  color: #c9c9c9;
+  color: #fefcd9;
   font-size: 0.95rem;
   margin-bottom: 40px;
   transition: opacity 0.2s ease;
@@ -1628,7 +2360,7 @@ body::before {
   font-weight: 700;
   letter-spacing: -0.04em;
   line-height: 1;
-  color: #c9c9c9;
+  color: #fefcd9;
 }
 
 .case-lead {
@@ -1636,7 +2368,7 @@ body::before {
   max-width: 46ch;
   font-size: clamp(1.1rem, 2vw, 1.45rem);
   line-height: 1.5;
-  color: #c9c9c9;
+  color: #fefcd9;
 }
 
 .case-live {
@@ -1674,14 +2406,14 @@ body::before {
   font-size: clamp(1.6rem, 3vw, 2.4rem);
   font-weight: 700;
   letter-spacing: -0.03em;
-  color: #c9c9c9;
+  color: #fefcd9;
 }
 
 .case-body p {
   margin: 0 0 18px;
   font-size: 1.15rem;
   line-height: 1.6;
-  color: #c9c9c9;
+  color: #fefcd9;
 }
 
 .case-body p:last-child { margin-bottom: 0; }
@@ -1709,7 +2441,7 @@ body::before {
 
 .case-fact__value {
   font-size: 1.05rem;
-  color: #c9c9c9;
+  color: #fefcd9;
 }
 
 /* Closing */
@@ -1722,7 +2454,7 @@ body::before {
 .case-closing p {
   margin: 12px 0 0;
   font-size: 1.1rem;
-  color: #c9c9c9;
+  color: #fefcd9;
 }
 
 .case-closing .case-live {
@@ -1733,226 +2465,6 @@ body::before {
   .case-grid { grid-template-columns: 1fr; gap: 16px; }
   .case-facts { grid-template-columns: 1fr 1fr; gap: 20px; }
   .case-cover img { aspect-ratio: 4 / 3; }
-}
-
-/* ============================================================
-   AI CHAT SECTION
-   ============================================================ */
-.chat-section {
-  max-width: calc(var(--content-max) + 2 * var(--content-pad));
-  margin: 0 auto;
-  padding: 12vh var(--content-pad) 8vh;
-  border-top: 1px solid rgba(255, 255, 255, 0.16);
-  display: grid;
-  grid-template-columns: 0.9fr 1.1fr;
-  gap: clamp(40px, 6vw, 96px);
-  align-items: start;
-}
-
-.chat-eyebrow {
-  margin: 0 0 14px;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  font-size: 0.8rem;
-  color: var(--accent);
-  font-weight: 600;
-}
-
-.chat-title {
-  margin: 0;
-  font-size: clamp(2rem, 4vw, 3.4rem);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
-  color: #c9c9c9;
-}
-
-.chat-lead {
-  margin: 20px 0 0;
-  max-width: 44ch;
-  font-size: 1.05rem;
-  line-height: 1.55;
-  color: #c9c9c9;
-}
-
-/* Chat window */
-.chat-window {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 18px;
-  padding: 20px;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  /* Fixed height — the window never grows; the log scrolls inside it. */
-  height: 520px;
-}
-
-.chat-log {
-  flex: 1;
-  min-height: 0;          /* allow the flex child to shrink and scroll */
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  overflow-y: auto;
-  padding-right: 4px;
-  /* Don't let scrolling inside the log chain to the page. */
-  overscroll-behavior: contain;
-}
-
-/* Thin scrollbar */
-.chat-log::-webkit-scrollbar { width: 6px; }
-.chat-log::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 999px;
-}
-
-.chat-msg {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  max-width: 92%;
-}
-
-.chat-msg--user {
-  align-self: flex-end;
-  flex-direction: row-reverse;
-}
-
-.chat-avatar {
-  flex: 0 0 auto;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-size: 0.85rem;
-  font-weight: 700;
-  background: var(--accent);
-  color: #fff;
-}
-
-.chat-bubble {
-  font-size: 1rem;
-  line-height: 1.5;
-  color: #e6e6e6;
-  padding: 12px 16px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.chat-msg--user .chat-bubble {
-  background: rgba(45, 82, 255, 0.16);
-  border-color: rgba(45, 82, 255, 0.3);
-  color: #fff;
-}
-
-.chat-bubble em { color: #fff; font-style: italic; }
-
-/* Streamed AI reply: each word rises + fades in as it arrives. */
-.chat-word {
-  display: inline-block;
-  opacity: 0;
-  transform: translateY(0.5em);
-  transition: opacity 0.35s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.chat-word.is-in {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* typing dots while waiting */
-.chat-typing { display: inline-flex; gap: 4px; align-items: center; }
-.chat-typing span {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: #c9c9c9; opacity: 0.5;
-  animation: chat-bounce 1s infinite ease-in-out;
-}
-.chat-typing span:nth-child(2) { animation-delay: 0.15s; }
-.chat-typing span:nth-child(3) { animation-delay: 0.3s; }
-@keyframes chat-bounce {
-  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
-  40% { transform: translateY(-4px); opacity: 1; }
-}
-
-/* Suggested question chips */
-.chat-suggestions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.chat-chip {
-  font: inherit;
-  font-size: 0.85rem;
-  color: #c9c9c9;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 999px;
-  padding: 8px 14px;
-  cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-}
-
-.chat-chip:hover {
-  background: #c9c9c9;
-  color: #01040a;
-  border-color: #c9c9c9;
-}
-
-/* Input row */
-.chat-form {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding-top: 14px;
-}
-
-.chat-input {
-  flex: 1;
-  background: transparent;
-  border: none;
-  outline: none;
-  color: #fff;
-  font: inherit;
-  font-size: 1rem;
-  padding: 8px 2px;
-}
-
-.chat-input::placeholder { color: rgba(201, 201, 201, 0.45); }
-
-.chat-send {
-  flex: 0 0 auto;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: transparent;
-  color: #c9c9c9;
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
-}
-
-.chat-send svg { width: 18px; height: 18px; }
-
-.chat-send:hover {
-  background: #c9c9c9;
-  color: #01040a;
-  border-color: #c9c9c9;
-}
-
-.chat-send:disabled { opacity: 0.4; cursor: default; }
-
-@media (max-width: 860px) {
-  .chat-section { grid-template-columns: 1fr; gap: 32px; }
-  .chat-window { height: 460px; }
 }
 
 /* ---------- VERTICAL SCROLL PROGRESS ----------
@@ -1966,21 +2478,52 @@ body::before {
   z-index: 900;
   display: flex;
   flex-direction: column;
+  align-items: flex-end;   /* keep segments glued to the right edge */
   gap: 10px;
   pointer-events: none;
   opacity: 1;
   transition: opacity 0.4s ease;
+  /* Each pixel inverts against whatever is behind it: light over the dark
+     sections, dark over the white project cards. So only the portion of the
+     bar that has physically crossed into the white section recolours — the
+     change happens right at the section edge, continuously (not per segment). */
+  mix-blend-mode: difference;
 }
 
 .scroll-progress.is-hidden { opacity: 0; }
+
+/* Solid duplicate, stacked exactly on top of the blended bar, no blend mode.
+   Starts invisible; JS eases its opacity up as the CTA card's photo passes
+   behind the bar, so the colour crossfades to its plain fixed shade instead
+   of snapping — and back down as the card leaves. Opacity is driven per
+   scroll-frame (like the smoke fade), so no CSS transition here. */
+.scroll-progress--solid {
+  mix-blend-mode: normal;
+  opacity: 0;
+}
 
 .scroll-progress__seg {
   position: relative;
   width: 2px;
   height: 34px;
-  border-radius: 2px;
+  border-radius: 0;
   background: rgba(255, 255, 255, 0.16);
-  overflow: hidden;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: width 0.3s ease, opacity 0.3s ease;
+}
+
+/* Generous hit area around each 2px segment so hover/click are usable. */
+.scroll-progress__seg::after {
+  content: '';
+  position: absolute;
+  inset: -5px -12px;
+}
+
+/* The solid duplicate is purely visual — never intercepts the cursor. */
+.scroll-progress--solid .scroll-progress__seg {
+  pointer-events: none;
+  cursor: default;
 }
 
 /* the fill grows top→bottom; JS sets scaleY 0..1 */
@@ -1988,7 +2531,7 @@ body::before {
   position: absolute;
   inset: 0;
   display: block;
-  background: #c9c9c9;
+  background: #fefcd9;
   transform: scaleY(var(--p, 0));
   transform-origin: top center;
 }
@@ -1996,8 +2539,100 @@ body::before {
 /* active segment gets a brighter fill */
 .scroll-progress__seg.is-active i { background: #fff; }
 
+/* ---- Projects group: per-project markers in the work-section slot ----
+   Compact by default: the four markers sit flush (no gaps) and read as ONE
+   continuous segment. While the viewport is inside the projects section
+   (.in-projects) the group expands and each marker morphs into a round dot
+   — visually distinct from the section lines — that lights up as you pass
+   its project; the current one is bigger with a ring. */
+.scroll-progress__group {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0;
+  height: var(--gh, 40px);
+  transition: height 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+              gap 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Compact: each marker is a quarter of the slot — a seamless line. */
+.scroll-progress__group .scroll-progress__seg {
+  flex: 0 0 auto;
+  height: calc(var(--gh, 40px) / 4);
+  min-height: 0;
+  transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+              height 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+              border-radius 0.4s ease,
+              transform 0.4s ease,
+              box-shadow 0.4s ease;
+}
+
+/* Expanded height = 4 dots + 3 gaps, with the SAME 10px gap the bar uses
+   between segments — so dot↔dot spacing equals dot↔line spacing. */
+.scroll-progress.in-projects .scroll-progress__group {
+  height: calc(4 * 8px + 3 * 10px);
+  gap: 10px;
+}
+
+/* Expanded: dots. translateX centres each dot on the 2px line's axis. */
+.scroll-progress.in-projects .scroll-progress__group .scroll-progress__seg {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transform: translateX(3px);
+}
+
+/* The dot's fill: in line mode it's the usual top→bottom fill; in dot mode
+   it switches to a soft light-up (opacity) so the circle stays a circle. */
+.scroll-progress.in-projects .scroll-progress__group .scroll-progress__seg i {
+  transform: none;
+  border-radius: 50%;
+  opacity: var(--p, 0);
+}
+
+/* Current project: bigger dot (scale keeps layout untouched), white fill. */
+.scroll-progress.in-projects .scroll-progress__group .scroll-progress__seg.is-current {
+  transform: translateX(3px) scale(1.45);
+}
+.scroll-progress__group .scroll-progress__seg.is-current i { background: #fff; }
+
+/* While navigating projects, the section segments step back a little. */
+.scroll-progress.in-projects > .scroll-progress__seg { opacity: 0.5; }
+
+/* Hover label — separate fixed element (outside the blended bar). */
+.progress-tip {
+  position: fixed;
+  z-index: 950;
+  transform: translateY(-50%);
+  background: rgba(10, 12, 18, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: #fefcd9;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.progress-tip.is-on { opacity: 1; }
+
+/* Over the light project cards the fixed UI flips to dark so it stays visible.
+   Plain colour swap — NO mix-blend (blend forces the browser off its fast
+   scroll path and tanks performance). */
+body.nav-on-light .brand,
+body.nav-on-light .nav-links a { color: #1a1a1a; }
+/* The progress bar recolours over the light cards via mix-blend-mode: difference
+   (see .scroll-progress) — the browser inverts each pixel against its backdrop,
+   so no per-segment class is needed. The navbar still swaps via .nav-on-light. */
+
 @media (max-width: 760px) {
-  .scroll-progress { display: none; }   /* skip on phones */
+  .scroll-progress,
+  .progress-tip { display: none; }   /* skip on phones */
 }
 
 /* ---------- VOLUME BARS (projects horizontal scroll) ----------
@@ -2034,9 +2669,9 @@ body::before {
   flex: 0 0 auto;
   width: 2px;
   /* --h (0..1): height peak at the scroll position.
-     --p (0..1): c9c9c9 fill for the bars already passed (left→right). */
+     --p (0..1): fefcd9 fill for the bars already passed (left→right). */
   height: calc(6px + 18px * var(--h, 0));
-  background: rgba(201, 201, 201, calc(0.16 + 0.84 * var(--p, 0)));
+  background: rgba(254, 252, 217, calc(0.16 + 0.84 * var(--p, 0)));
   border-radius: 2px;
   transition: height 0.18s ease, background-color 0.18s ease;
 }
@@ -2047,16 +2682,11 @@ body::before {
 
 /* ---------- FOOTER NAV + footer takeover ----------
    When the footer is in view, the fixed navbar fades out and its links live
-   in the footer instead; the contact form is hidden so the footer is clean. */
-.footer-top {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 24px;
-  flex-wrap: wrap;
-}
+   in the footer instead; the contact form is hidden so the footer is clean.
+   (.footer-top itself is declared once, above with .footer-card.) */
 
-/* Footer link groups: nav column on the left, socials on the right. */
+/* Footer link groups: nav column on the left, socials on the right,
+   spread across the full width above the name. */
 .footer-cols {
   width: 100%;
   display: flex;
@@ -2069,11 +2699,16 @@ body::before {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  /* Reveal the link columns once we reach the bottom of the footer. */
+  /* Hidden by default; revealed either by the scroll-scrubbed GSAP tween
+     (below) or, as a fallback, by body.at-footer-end. */
   opacity: 0;
   transform: translateY(16px);
   transition: opacity 0.6s ease, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
 }
+
+/* When GSAP drives the columns per scroll-frame, drop the CSS transition so
+   it doesn't lag the scrub. */
+.footer-card.links-scrub .footer-col { transition: none; }
 
 body.at-footer-end .footer-col {
   opacity: 1;
@@ -2099,12 +2734,12 @@ body.at-footer-end .footer-col:nth-child(3) { transition-delay: 0.1s; }
 }
 
 .footer-info__muted {
-  color: rgba(201, 201, 201, 0.55);
+  color: rgba(0, 0, 0, 0.5);
   font-size: 0.95rem;
 }
 
 .footer-nav a {
-  color: #c9c9c9;
+  color: #1a1a1a;
   text-decoration: none;
   font-size: 20px;
   font-weight: 500;
@@ -2119,8 +2754,15 @@ body.at-footer-end .footer-col:nth-child(3) { transition-delay: 0.1s; }
 body.at-footer .topbar,
 body.at-footer .nav-blur {
   opacity: 0;
-  transform: translateY(-12px);
   pointer-events: none;
+}
+/* Slide fully up out of view. The topbar keeps its translateX(-50%) centring
+   so it doesn't jump sideways while it lifts away. */
+body.at-footer .topbar {
+  transform: translateX(-50%) translateY(-120%);
+}
+body.at-footer .nav-blur {
+  transform: translateY(-100%);
 }
 
 /* Hide the whole contact block (heading + form) at the footer, so the
